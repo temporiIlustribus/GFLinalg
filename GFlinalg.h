@@ -10,39 +10,97 @@ namespace GFlinalg {
     private:
         T value;
         uint8_t sz;
+
+        // Internal multiplication procedure
+        binPolyniomial<T> polMul(binPolyniomial<T>& a, binPolyniomial<T>& b,
+                                 binPolyniomial<T>& modulus) {
+            binPolyniomial<T> res(0);
+            {
+                binPolyniomial<T> mask(1);
+                for (size_t i = 0; i < b.size(); ++i) {
+                    res.value ^= a.value * (b.value & (mask.value));
+                    mask.value <<= 1;
+                }
+            }
+
+            res.reduce();
+
+            return res;
+        }
+
+        binPolyniomial<T> polSum(binPolyniomial<T>& a, binPolyniomial<T>& b,
+                                 binPolyniomial<T>& modulus) {
+
+
+        }
+
+        uint8_t leadElemPos(binPolyniomial<T> pol) {
+            uint8_t pos = 0;
+            // Adjust modulus polynomial - zero leftmost bit
+            for (uint8_t i = 1; i < pol.sz; ++i) {
+                if (pol.value >> (pol.sz - i) & 1) {
+                    pos = i;
+                    break;
+                }
+            }
+            return pos;
+        }
+
     public:
-        operator int() { return static_cast<int>(value); }
-        operator uint64_t() { return static_cast<uint64_t>(value); }
-        operator uint32_t() { return static_cast<uint32_t>(value); }
+        static T modPol;
+
+        binPolyniomial(T& val) : value(val), sz(sizeof(val) << 3) {}
+        binPolyniomial() : value(0), sz(1) {}
+        binPolyniomial(int val) : value(static_cast<T>(val)), sz(sizeof(T) << 3) {}
+
         T getVal() { return value; }
         T& val() { return value; }
-        T size() { return sz; }
-        binPolyniomial(T& val): value(val), sz(sizeof(val) << 3) {}
-        binPolyniomial(int val) : value(static_cast<T>(val)), sz(sizeof(val) << 3) {}
-
-    }
-
-    template<class T>
-    T binPolynomialMul(T& a, T& b, T& modulus) {
-        T mask = 1;
-        T res = 0;
-        for (size_t i = 0; i < b.size; ++i) {
-            res ^= a << b & (mask)
-            mask <<= 1;
+        size_t size() { return sz; }
+        static void setModulus(T& val) {
+            modPol = val;
         }
-        std::cout << res;
-        return res;
-    }
+        static void setModulus(int val) {
+            modPol = static_cast<T>(val);
+        }
+        void reduce(binPolyniomial<T>& modulus) {
+            auto pos = leadElemPos(modulus);
+            // Reduce by modulus
+            uint8_t i = 1;
+            while (value >= modulus.value) {
+                if ((value >> (sz-i)) & 1)
+                    value ^= modulus.value << (pos - i);
+                ++i;
+            }
+            //this->value ^= temp.value;
+        }
 
-    template<class T>
-    T binPolynomialSum(T& a, T& b, T& modulus) {
+        void reduce() {
+            binPolyniomial<T> temp(modPol);
+            reduce(temp);
+        }
 
-    }
+        operator int() { return static_cast<int>(value); }
+        operator uint64_t() { return static_cast<uint64_t>(value); }
+        binPolyniomial<T> operator * (binPolyniomial<T>& pol) {
+            binPolyniomial<T> temp(modPol);
+            return polMul(this, pol, temp);
+        }
 
-    template<class T>
-    T binPolynomialInverse(T& a, T& b, T& modulus) {
+        binPolyniomial<T> operator + (binPolyniomial<T>& pol) {
+            binPolyniomial<T> temp(modPol);
+            return polSum(this, pol, temp);
+        }
+    
+    
+    };
 
-    }
+
+    //////////////////
+    //              //
+    //  TODO  LIST  //
+    //              //
+    //////////////////
+
 
     // Таблица инверсий
     template<size_t N, class Data, class T>
@@ -62,7 +120,7 @@ namespace GFlinalg {
     template<size_t N, class Data, class T>
     class sumTable {
     public:
-        static constexpr T& data = sumTable<N - 1, binPolynomialSum(N - 1), Data>::data;
+        static constexpr T& data;
     };
 
     template<class Data, class T>
@@ -72,15 +130,15 @@ namespace GFlinalg {
     };
 
 
-    //Таблица умножения
+    // Таблица умножения
     template<size_t N, class Data, class T>
-    class sumTable {
+    class mulTable {
     public:
-        static constexpr T& data = sumTable<N - 1, binPolynomialMul(N - 1), Data>::data;
+        static constexpr T& data;
     };
 
     template<class Data, class T>
-    class sumTable<0, Data, T> {
+    class mulTable<0, Data, T> {
     public:
         static constexpr T data[] = {Data};
     };
