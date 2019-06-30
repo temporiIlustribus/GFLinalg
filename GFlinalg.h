@@ -101,8 +101,10 @@ namespace GFlinalg {
     //              //
     //////////////////
 
+    // Note: binary operators for the polynomials currently compute everything at runtime.
+    // Final version will use tables to do all of the operations in O(1) time (currently O(n^2) for GF(2^n))
 
-    // Таблица инверсий
+    // Inversion Table
     template<size_t N, class Data, class T>
     class inverseTable {
     public:
@@ -116,31 +118,21 @@ namespace GFlinalg {
     };
 
 
-    // Таблица сложения
+    // Addition table
     template<size_t N, class Data, class T>
     class sumTable {
     public:
-        static constexpr T& data;
-    };
-
-    template<class Data, class T>
-    class sumTable<0, Data, T> {
-    public:
-        static constexpr T data[] = {Data};
+        static constexpr T data[];
     };
 
 
-    // Таблица умножения
+
+    // Multiplication table
     template<size_t N, class Data, class T>
     class mulTable {
     public:
-        static constexpr T& data;
+        static constexpr T data[];
     };
 
-    template<class Data, class T>
-    class mulTable<0, Data, T> {
-    public:
-        static constexpr T data[] = {Data};
-    };
 
 }
