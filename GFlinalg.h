@@ -11,34 +11,31 @@ namespace GFlinalg {
         T value;
         uint8_t sz;
 
-        // Internal multiplication procedure
-        binPolyniomial<T> polMul(binPolyniomial<T>& a, binPolyniomial<T>& b,
-                                 binPolyniomial<T>& modulus) {
+        // Internal multiplication
+        binPolyniomial<T> polMul(const binPolyniomial<T>& a, const binPolyniomial<T>& b) const {
             binPolyniomial<T> res(0);
             {
-                binPolyniomial<T> mask(1);
-                for (size_t i = 0; i < b.size(); ++i) {
-                    res.value ^= a.value * (b.value & (mask.value));
-                    mask.value <<= 1;
+                T mask = 1;
+                for (size_t i = 0; i < b.sz; ++i) {
+                    res.value ^= a.value * (b.value & (mask));
+                    mask <<= 1;
                 }
             }
-
             res.reduce();
-
+            return res;
+        }
+        // Internal addition
+        binPolyniomial<T> polSum(const binPolyniomial<T>& a, const binPolyniomial<T>& b) const {
+            binPolyniomial<T> res(a.value ^ b.value);
+            res.reduce();
             return res;
         }
 
-        binPolyniomial<T> polSum(binPolyniomial<T>& a, binPolyniomial<T>& b,
-                                 binPolyniomial<T>& modulus) {
-
-
-        }
-
-        uint8_t leadElemPos(binPolyniomial<T> pol) {
+        uint8_t leadElemPos(T& pol) {
             uint8_t pos = 0;
             // Adjust modulus polynomial - zero leftmost bit
-            for (uint8_t i = 1; i < pol.sz; ++i) {
-                if (pol.value >> (pol.sz - i) & 1) {
+            for (uint8_t i = 1; i < (sizeof(T) << 3); ++i) {
+                if (pol >> ((sizeof(T) << 3) - i) & 1) {
                     pos = i;
                     break;
                 }
@@ -46,52 +43,51 @@ namespace GFlinalg {
             return pos;
         }
 
+        void reduce(T& modulus) {
+            auto pos = leadElemPos(modulus);
+            // Reduce by modulus
+            uint8_t i = 1;
+            while (value >= modulus) {
+                if ((value >> (sz - i)) & 1)
+                    value ^= modulus << (pos - i);
+                ++i;
+            }
+        }
+
     public:
         static T modPol;
-
-        binPolyniomial(T& val) : value(val), sz(sizeof(val) << 3) {}
-        binPolyniomial() : value(0), sz(1) {}
-        binPolyniomial(int val) : value(static_cast<T>(val)), sz(sizeof(T) << 3) {}
+        binPolyniomial<T>() : value(0), sz(1) {}
+        binPolyniomial<T>(const T& val) : value(val), sz(sizeof(val) << 3) {}
+        //binPolyniomial<T>(const binPolynomial<T>& pol) : value(pol.value), sz(pol.sz) {}
+        binPolyniomial<T>(int val) : value(static_cast<T>(val)), sz(sizeof(T) << 3) {}
 
         T getVal() { return value; }
         T& val() { return value; }
         size_t size() { return sz; }
-        static void setModulus(T& val) {
-            modPol = val;
-        }
-        static void setModulus(int val) {
-            modPol = static_cast<T>(val);
-        }
-        void reduce(binPolyniomial<T>& modulus) {
-            auto pos = leadElemPos(modulus);
-            // Reduce by modulus
-            uint8_t i = 1;
-            while (value >= modulus.value) {
-                if ((value >> (sz-i)) & 1)
-                    value ^= modulus.value << (pos - i);
-                ++i;
-            }
-            //this->value ^= temp.value;
-        }
-
+        
         void reduce() {
-            binPolyniomial<T> temp(modPol);
-            reduce(temp);
+            reduce(modPol);
         }
 
         operator int() { return static_cast<int>(value); }
         operator uint64_t() { return static_cast<uint64_t>(value); }
-        binPolyniomial<T> operator * (binPolyniomial<T>& pol) {
-            binPolyniomial<T> temp(modPol);
-            return polMul(this, pol, temp);
+
+        binPolyniomial<T> operator * (binPolyniomial<T>& pol) const {
+            return polMul(*this, pol);
         }
 
-        binPolyniomial<T> operator + (binPolyniomial<T>& pol) {
-            binPolyniomial<T> temp(modPol);
-            return polSum(this, pol, temp);
+        binPolyniomial<T> operator + (binPolyniomial<T>& pol) const {
+            return polSum(*this, pol);
         }
-    
-    
+        binPolyniomial<T> operator *= (binPolyniomial<T>& pol) {
+            *this = *this * pol;
+            return *this;
+        }
+
+        binPolyniomial<T> operator += (binPolyniomial<T>& pol) {
+            *this = *this + pol;
+            return *this;
+        }
     };
 
 
@@ -103,6 +99,7 @@ namespace GFlinalg {
 
     // Note: binary operators for the polynomials currently compute everything at runtime.
     // Final version will use tables to do all of the operations in O(1) time (currently O(n^2) for GF(2^n))
+    // The binPolynomial class will contain all 3 tables as static fields
 
     // Inversion Table
     template<size_t N, class Data, class T>
@@ -124,8 +121,6 @@ namespace GFlinalg {
     public:
         static constexpr T data[];
     };
-
-
 
     // Multiplication table
     template<size_t N, class Data, class T>
