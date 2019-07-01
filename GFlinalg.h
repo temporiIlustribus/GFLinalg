@@ -4,36 +4,51 @@
 #include <vector>
 
 namespace GFlinalg {
-
-    template <class T>
-    class  binPolyniomial {
-    private:
+    template <class T, size_t SZ>
+    class  baseBinPolynomial {
+    public:
+        constexpr static size_t order = 1 << SZ;
+    protected:
+        using GFtable = std::array<std::array <T, order>, order>;
         T value;
         uint8_t sz;
 
-        // Internal multiplication
-        binPolyniomial<T> polMul(const binPolyniomial<T>& a, const binPolyniomial<T>& b) const {
-            binPolyniomial<T> res(0);
-            {
-                T mask = 1;
-                for (size_t i = 0; i < b.sz; ++i) {
-                    res.value ^= a.value * (b.value & (mask));
-                    mask <<= 1;
+        // Internal multiplication version 1
+        baseBinPolynomial polMul(const baseBinPolynomial& a, const baseBinPolynomial& b) const {
+            baseBinPolynomial<T,SZ> res(0);
+            uint8_t leadPos = sz - leadElemPos(a.value);
+            uint8_t modLeadPos = sz - leadElemPos(modPol);
+            for (size_t i = 0; i < b.sz; ++i) {
+                if ((b.value >> i) & 1) {
+                    res.value ^= a.value << i;
                 }
             }
             res.reduce();
             return res;
         }
+        // TODO:
+        // Internal multiplication version 2
+        //baseBinPolynomial polMulAlt(const baseBinPolynomial& a, const baseBinPolynomial& b) const {
+        //    baseBinPolynomial res(0);
+        //    auto x = a.value;
+        //    auto y = b.value;
+        //    uint8_t modLeadPos = sz - leadElemPos(modPol);
+        //    do {
+        //        res ^= (y & 1);
+        //
+        //    } while (y << = 1)
+        //            return res;
+        //}
+
         // Internal addition
-        binPolyniomial<T> polSum(const binPolyniomial<T>& a, const binPolyniomial<T>& b) const {
-            binPolyniomial<T> res(a.value ^ b.value);
-            res.reduce();
+        baseBinPolynomial polSum(const baseBinPolynomial& a, const baseBinPolynomial& b) const {
+            baseBinPolynomial res(a.value ^ b.value);
             return res;
         }
 
-        uint8_t leadElemPos(T& pol) {
+        // Get the position of the leading 1 in the polynomial
+        uint8_t leadElemPos(const T& pol) const {
             uint8_t pos = 0;
-            // Adjust modulus polynomial - zero leftmost bit
             for (uint8_t i = 1; i < (sizeof(T) << 3); ++i) {
                 if (pol >> ((sizeof(T) << 3) - i) & 1) {
                     pos = i;
@@ -56,38 +71,26 @@ namespace GFlinalg {
 
     public:
         static T modPol;
-        binPolyniomial<T>() : value(0), sz(1) {}
-        binPolyniomial<T>(const T& val) : value(val), sz(sizeof(val) << 3) {}
-        //binPolyniomial<T>(const binPolynomial<T>& pol) : value(pol.value), sz(pol.sz) {}
-        binPolyniomial<T>(int val) : value(static_cast<T>(val)), sz(sizeof(T) << 3) {}
+        baseBinPolynomial() : value(0), sz(sizeof(T) << 3) {}
+        baseBinPolynomial(const T& val) : value(val), sz(sizeof(val) << 3) {
+            reduce();
+        }
+        baseBinPolynomial(int val) : value(static_cast<T>(val)), sz(sizeof(T) << 3) {}
 
         T getVal() { return value; }
         T& val() { return value; }
         size_t size() { return sz; }
-        
+        size_t GFsize() { return SZ; }
+
         void reduce() {
             reduce(modPol);
         }
 
         operator int() { return static_cast<int>(value); }
         operator uint64_t() { return static_cast<uint64_t>(value); }
+        operator T() { return value; }
 
-        binPolyniomial<T> operator * (binPolyniomial<T>& pol) const {
-            return polMul(*this, pol);
-        }
 
-        binPolyniomial<T> operator + (binPolyniomial<T>& pol) const {
-            return polSum(*this, pol);
-        }
-        binPolyniomial<T> operator *= (binPolyniomial<T>& pol) {
-            *this = *this * pol;
-            return *this;
-        }
-
-        binPolyniomial<T> operator += (binPolyniomial<T>& pol) {
-            *this = *this + pol;
-            return *this;
-        }
     };
 
 
@@ -97,37 +100,73 @@ namespace GFlinalg {
     //              //
     //////////////////
 
-    // Note: binary operators for the polynomials currently compute everything at runtime.
-    // Final version will use tables to do all of the operations in O(1) time (currently O(n^2) for GF(2^n))
-    // The binPolynomial class will contain all 3 tables as static fields
+    // Note: binary operators for the binPolynomial compute everything runtime
+    // TableBased version will use tables to do all of the operations in O(1) time 
+    // (where binPolynomial takes O(n^2) for GF(2^n))
+    // The TableBased_binPolynomial class will contain 3 tables
 
-    // Inversion Table
-    template<size_t N, class Data, class T>
-    class inverseTable {
+    template <class T, size_t SZ>
+    class BasicBinPolynomial : public baseBinPolynomial<T, SZ> {
     public:
-        static constexpr T& data = inverseTable<N - 1, binPolynomialInverse(N - 1), Data>::data;
+        using baseBinPolynomial<T,SZ>::baseBinPolynomial;
+        BasicBinPolynomial(const baseBinPolynomial<T, SZ>& pol) : baseBinPolynomial<T,SZ>(pol) {}
+        BasicBinPolynomial operator * (const BasicBinPolynomial& other) const {
+            return this->polMul(*this, other);
+        }
+        BasicBinPolynomial operator + (const BasicBinPolynomial& other) const {
+            return this->polSum(*this, other);
+        }
+        BasicBinPolynomial& operator *= (const BasicBinPolynomial& other) {
+            *this = this->polSum(*this, other);
+            return *this;
+        }
+        BasicBinPolynomial& operator += (const BasicBinPolynomial& other) {
+            *this = this->polSum(*this, other);
+            return *this;
+        }
     };
 
-    template<class Data, class T>
-    class inverseTable<0, Data, T> {
+    template <class T, size_t SZ>
+    class TableBinPolynomial : public BasicBinPolynomial<T, SZ> {
+    private:
+        static T mulTable[];
+
     public:
-        static constexpr T data[] = {Data};
+        using baseBinPolynomial<T, SZ>::order;
+        using baseBinPolynomial<T, SZ>::GFtable;
+        TableBinPolynomial(const BasicBinPolynomial<T, SZ>& pol) : BasicBinPolynomial<T, SZ>(pol) {}
+        static constexpr GFtable makeTable() {
+            GFtable temp;
+            // Note: requires checking whethere we have traversed through all elements
+            for (size_t i = 0; i < order; ++i) {
+                for (size_t j = 0; j < order; ++j) {
+                    BasicBinPolynomial<T, SZ> a(i);
+                    BasicBinPolynomial<T, SZ> b(j);
+                    temp[i][j] = (a * b).getValue();
+                }
+            }
+            mulTable = temp;
+            return mulTable;
+        }
+        using BasicBinPolynomial<T,SZ>::BasicBinPolynomial;
+        
+        TableBinPolynomial operator * (const TableBinPolynomial& other) const {
+            return mulTable[*this->getVal(), other.getVal()];
+        }
+
+        TableBinPolynomial& operator *= (const TableBinPolynomial& other) const {
+            *this->val = *this * other;
+            return *this;
+        }
+
+        TableBinPolynomial operator + (const TableBinPolynomial& other) const {
+            return TableBinPolynomial(other + *this);
+        }
+
+        TableBinPolynomial operator += (const TableBinPolynomial& other) const {
+            *this = *this + other;
+            return *this;
+        }
     };
-
-
-    // Addition table
-    template<size_t N, class Data, class T>
-    class sumTable {
-    public:
-        static constexpr T data[];
-    };
-
-    // Multiplication table
-    template<size_t N, class Data, class T>
-    class mulTable {
-    public:
-        static constexpr T data[];
-    };
-
 
 }
