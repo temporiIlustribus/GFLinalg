@@ -4,6 +4,7 @@
 #include <array>
 
 namespace GFlinalg {
+
     template <class T, size_t SZ, T modPol>
     class  BaseBinPolynomial {
     public:
@@ -37,7 +38,7 @@ namespace GFlinalg {
         // Internal division
         BaseBinPolynomial polDiv(const BaseBinPolynomial& a, const BaseBinPolynomial& b) const {
             // Get b^-1: a / b = a * b^-1
-            auto invB = galoisPow(b, order-2);
+            auto invB = galoisPow(b, order - 2);
             return polMul(a, invB);
         }
 
@@ -104,6 +105,13 @@ namespace GFlinalg {
 
     };
 
+    /*
+    Basic GF element class. All math operations are done directly in polynomial form
+        Operation complexity:
+        " + " - O(1)
+        " * " - O(n^2)
+        " / " - O(log^2(order) + n^2)
+    */
     template <class T, size_t SZ, T modPol>
     class BasicBinPolynomial : public BaseBinPolynomial<T, SZ, modPol> {
     public:
@@ -130,13 +138,22 @@ namespace GFlinalg {
         BasicBinPolynomial operator + (const BasicBinPolynomial& other) const {
             return this->polSum(*this, other);
         }
-        
+
         BasicBinPolynomial& operator += (const BasicBinPolynomial& other) {
             *this = this->polSum(*this, other);
             return *this;
         }
     };
 
+
+
+    /*
+    GF element class; uses convertion to power of primitive element internaly
+        Operation complexity:
+        " + " - O(1)
+        " * " - O(1)
+        " / " - O(1)
+    */
     template <class T, size_t SZ, T modPol>
     class PowBinPolynomial : public BaseBinPolynomial<T, SZ, modPol> {
     public:
@@ -154,7 +171,7 @@ namespace GFlinalg {
             second: polynomial -> power of primitive element
         */
         static constexpr auto makeAlphaToIndex() {
-            std::array<T, (order - 1)*2> alpha;
+            std::array<T, (order - 1) * 2> alpha;
             std::array<size_t, order> index;
             T counter = 1;
             for (size_t i = 0; i < order - 1; ++i) {
@@ -163,7 +180,7 @@ namespace GFlinalg {
                 counter <<= 1;
             }
             // This is to avoid % operations in math operators
-            for (size_t i = order-1; i < alpha.size(); ++i)
+            for (size_t i = order - 1; i < alpha.size(); ++i)
                 alpha[i] = alpha[i - order + 1];
 
             return std::make_pair(alpha, index);
@@ -190,12 +207,12 @@ namespace GFlinalg {
             if (this->value == 0 || other.value == 0)
                 return PowBinPolynomial(0);
             return PowBinPolynomial(alphaToIndex.first[alphaToIndex.second[this->value] +
-                                                       alphaToIndex.second[other.value]]);
+                                    alphaToIndex.second[other.value]]);
         }
 
         PowBinPolynomial& operator *= (const PowBinPolynomial& other) {
-            *this->val = alphaToIndex.first[alphaToIndex.second[*this->value] +
-                                            alphaToIndex.second[other.value]];
+            this->val() = alphaToIndex.first[alphaToIndex.second[this->value] +
+                alphaToIndex.second[other.value]];
             return *this;
         }
 
@@ -228,7 +245,13 @@ namespace GFlinalg {
         }
     };
 
-
+    /*
+    Table based GF element class. All math operations are done using multiplication table and division table
+        Operation complexity:
+        " + " - O(1)
+        " * " - O(1)
+        " / " - O(1)
+    */
     template <class T, size_t SZ, T modPol>
     class TableBinPolynomial : public BasicBinPolynomial<T, SZ, modPol> {
     private:
@@ -297,20 +320,20 @@ namespace GFlinalg {
         using BasicBinPolynomial<T, SZ, modPol>::BasicBinPolynomial;
 
         TableBinPolynomial operator * (const TableBinPolynomial& other) const {
-            return mulTable[*this->getVal(), other.getVal()];
+            return mulTable[this->getVal(), other.getVal()];
         }
 
         TableBinPolynomial& operator *= (const TableBinPolynomial& other) const {
-            *this->val = *this * other;
+            this->val() = *this * other;
             return *this;
         }
 
         TableBinPolynomial operator / (const TableBinPolynomial& other) const {
-            return divTable[*this->getVal(), other.getVal()];
+            return divTable[this->getVal(), other.getVal()];
         }
 
         TableBinPolynomial& operator /= (const TableBinPolynomial& other) const {
-            *this->val = *this / other;
+            this->val() = *this / other;
             return *this;
         }
 
