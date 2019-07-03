@@ -2,7 +2,6 @@
 #include <iostream>
 #include <memory>
 #include <array>
-#include <vector>
 
 namespace GFlinalg {
     template <class T, size_t SZ, T modPol>
@@ -10,14 +9,14 @@ namespace GFlinalg {
     public:
         constexpr static size_t order = 1 << SZ;
     protected:
-        using vectPair = std::pair<std::vector<T>, std::vector<size_t>>;
+        using arrayPair = std::pair<std::array<T, (order - 1) << 1>, std::array<size_t, order>>;
         using GFtable = std::array<std::array <T, order>, order>;
         T value;
         uint8_t sz;
 
         // Internal multiplication version 1
         BaseBinPolynomial polMul(const BaseBinPolynomial& a, const BaseBinPolynomial& b) const {
-            BaseBinPolynomial<T, SZ> res(0);
+            BaseBinPolynomial res(0);
             uint8_t leadPos = sz - leadElemPos(a.value);
             uint8_t modLeadPos = sz - leadElemPos(modPol);
             for (size_t i = 0; i < b.sz; ++i) {
@@ -37,7 +36,8 @@ namespace GFlinalg {
 
         // Internal division
         BaseBinPolynomial polDiv(const BaseBinPolynomial& a, const BaseBinPolynomial& b) const {
-            auto invB = galoisPow(b, SZ-2);
+            // Get b^-1: a / b = a * b^-1
+            auto invB = galoisPow(b, order-2);
             return polMul(a, invB);
         }
 
@@ -66,13 +66,15 @@ namespace GFlinalg {
                 value ^= modulus;
         }
 
-        BaseBinPolynomial galoisPow(const BaseBinPolynomial val, size_t power) {
-            BaseBinPolynomial res = 1;
+        BaseBinPolynomial galoisPow(const BaseBinPolynomial& val, size_t power) const {
+            BaseBinPolynomial copyVal{val};
+            BaseBinPolynomial res{1};
             while (power) {
                 if (power & 1) {
-                    res *= val;
+                    res = polMul(res, copyVal);
+                    --power;
                 } else {
-                    val *= val;
+                    copyVal = polMul(copyVal, copyVal);
                     power >>= 1;
                 }
             }
@@ -112,7 +114,16 @@ namespace GFlinalg {
         }
 
         BasicBinPolynomial& operator *= (const BasicBinPolynomial& other) {
-            *this = this->polSum(*this, other);
+            *this = this->polMul(*this, other);
+            return *this;
+        }
+
+        BasicBinPolynomial operator / (const BasicBinPolynomial& other) const {
+            return this->polDiv(*this, other);
+        }
+
+        BasicBinPolynomial& operator /= (const BasicBinPolynomial& other) {
+            *this = this->polDiv(*this, other);
             return *this;
         }
 
@@ -132,27 +143,29 @@ namespace GFlinalg {
         using BaseBinPolynomial<T, SZ, modPol>::value;
         using BaseBinPolynomial<T, SZ, modPol>::order;
         using BaseBinPolynomial<T, SZ, modPol>::polSum;
-        using BaseBinPolynomial<T, SZ, modPol>::vectPair;
+        using BaseBinPolynomial<T, SZ, modPol>::arrayPair;
     private:
-        static vectPair alphaToIndex;
+        static arrayPair alphaToIndex;
     public:
-
-        PowBinPolynomial(const BasicBinPolynomial<T, SZ, modPol>& pol) : BaseBinPolynomial<T, SZ, modPol>(pol.getVal()) {}
         PowBinPolynomial(const BaseBinPolynomial<T, SZ, modPol>& pol) : BaseBinPolynomial<T, SZ, modPol>(pol) {}
         /*
-        Creates a pair of vectors (vectPair):
+        Creates a pair of vectors (arrayPair):
             first: power of primitive element -> polynomial
             second: polynomial -> power of primitive element
         */
         static constexpr auto makeAlphaToIndex() {
-            std::vector<T> alpha(order - 1);
-            std::vector<size_t> index(order);
+            std::array<T, (order - 1)*2> alpha;
+            std::array<size_t, order> index;
             T counter = 1;
             for (size_t i = 0; i < order - 1; ++i) {
                 alpha[i] = BasicBinPolynomial<T, SZ, modPol>(counter).getVal();
                 index[alpha[i]] = i;
                 counter <<= 1;
             }
+            // This is to avoid % operations in math operators
+            for (size_t i = order-1; i < alpha.size(); ++i)
+                alpha[i] = alpha[i - order + 1];
+
             return std::make_pair(alpha, index);
         }
 
@@ -165,35 +178,43 @@ namespace GFlinalg {
         }
 
         /*
-        Returns a pair of vectors (vectPair):
+        Returns a pair of vectors (arrayPair):
             first: power of primitive element -> polynomial
             second: polynomial -> power of primitive element
         */
-        static vectPair getAlphaToIndex() {
+        static arrayPair getAlphaToIndex() {
             return alphaToIndex;
         }
 
         PowBinPolynomial operator * (const PowBinPolynomial& other) const {
             if (this->value == 0 || other.value == 0)
                 return PowBinPolynomial(0);
-            return PowBinPolynomial(alphaToIndex.first[(alphaToIndex.second[this->value] +
-                                                        alphaToIndex.second[other.value]) % (order - 1)]);
+            return PowBinPolynomial(alphaToIndex.first[alphaToIndex.second[this->value] +
+                                                       alphaToIndex.second[other.value]]);
         }
 
         PowBinPolynomial& operator *= (const PowBinPolynomial& other) {
-            *this->val = alphaToIndex.first[(alphaToIndex.second[*this->value] +
-                                             alphaToIndex.second[other.value]) % (order - 1)];
+            *this->val = alphaToIndex.first[alphaToIndex.second[*this->value] +
+                                            alphaToIndex.second[other.value]];
             return *this;
         }
 
         PowBinPolynomial operator / (const PowBinPolynomial& other) const {
-            return PowBinPolynomial(alphaToIndex.first[alphaToIndex.second[this->value] -
-                                    alphaToIndex.second[other.value] % (order - 1)]);
+            if (value == 0)
+                return PowBinPolynomial(0);
+            auto temp(alphaToIndex.second[this->value]);
+            if (temp < alphaToIndex.second[other.value])
+                temp += order - 1;
+            return PowBinPolynomial(alphaToIndex.first[temp - alphaToIndex.second[other.value]]);
         }
 
         PowBinPolynomial& operator /= (const PowBinPolynomial& other) {
-            *this->val = alphaToIndex.first[alphaToIndex.second[this->value] -
-                alphaToIndex.second[other.value] % (order - 1)];
+            if (value == 0)
+                return PowBinPolynomial(0);
+            auto temp(alphaToIndex.second[this->value]);
+            if (temp < alphaToIndex.second[other.value])
+                temp += order - 1;
+            *this->val = alphaToIndex.first[temp - alphaToIndex.second[other.value]];
             return *this;
         }
 
@@ -228,20 +249,38 @@ namespace GFlinalg {
             GFtable temp;
             // Note: requires checking whether we have traversed through all elements
             for (size_t i = 0; i < order; ++i) {
-                for (size_t j = 0; j < order; ++j) {
+                for (size_t j = i; j < order; ++j) {
                     BasicBinPolynomial<T, SZ, modPol> a(i);
                     BasicBinPolynomial<T, SZ, modPol> b(j);
-                    temp[i][j] = (a * b).getValue();
+                    temp[a.value][b.value] = (a * b).getValue();
+                    temp[b.value][a.value] = temp[a.value][b.value];
                 }
             }
             return temp;
         }
 
         /*
-        Creates division table (GFtable) :
-            Table[pol1][pol2] = pol1 / pol2;
+        Creates division table (GFtable) using multiplication table:
+            Table[pol1 * pol2][pol2] = pol1;
+            Table[pol1 * pol2][pol1] = pol2;
 
         Note: multiplication table is required to create this table
+        */
+        static constexpr GFtable makeInvMulTable() {
+            GFtable temp;
+            for (size_t i = 0; i < order; ++i) {
+                for (size_t j = i; j < order; ++j) {
+                    BasicBinPolynomial<T, SZ, modPol> a(i);
+                    BasicBinPolynomial<T, SZ, modPol> b(j);
+                    temp[mulTable[a.value][b.value]][a.value] = b.value;
+                    temp[mulTable[a.value][b.value]][b.value] = a.value;
+                }
+            }
+            return temp;
+        }
+        /*
+        Creates division table (GFtable) :
+            Table[pol1][pol2] = pol1 / pol2;
         */
         static constexpr GFtable makeDivTable() {
             GFtable temp;
@@ -249,8 +288,7 @@ namespace GFlinalg {
                 for (size_t j = 0; j < order; ++j) {
                     BasicBinPolynomial<T, SZ, modPol> a(i);
                     BasicBinPolynomial<T, SZ, modPol> b(j);
-                    temp[mulTable[a.value][b.value]][a.value] = b.value;
-                    temp[mulTable[a.value][b.value]][b.value] = a.value;
+                    temp[a.value][b.value] = (a / b).getVal();
                 }
             }
             return temp;
