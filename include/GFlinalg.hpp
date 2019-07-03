@@ -10,8 +10,6 @@ namespace GFlinalg {
     public:
         constexpr static size_t order = 1 << SZ;
     protected:
-        using arrayPair = std::pair<std::array<T, (order - 1) << 1>, std::array<size_t, order>>;
-        using GFtable = std::array<std::array <T, order>, order>;
         T value;
         uint8_t sz;
 
@@ -88,7 +86,9 @@ namespace GFlinalg {
         BaseBinPolynomial(const T& val) : value(val), sz(sizeof(val) << 3) {
             reduce();
         }
-        BaseBinPolynomial(int val) : value(static_cast<T>(val)), sz(sizeof(T) << 3) {}
+        BaseBinPolynomial(int val) : value(static_cast<T>(val)), sz(sizeof(T) << 3) {
+            reduce();
+        }
 
         T getVal() { return value; }
         T& val() { return value; }
@@ -160,8 +160,8 @@ namespace GFlinalg {
         using BaseBinPolynomial<T, SZ, modPol>::value;
         using BaseBinPolynomial<T, SZ, modPol>::order;
         using BaseBinPolynomial<T, SZ, modPol>::polSum;
-        using BaseBinPolynomial<T, SZ, modPol>::arrayPair;
     private:
+        using arrayPair = std::pair<std::array<T, (order - 1) << 1>, std::array<size_t, order>>;
         static arrayPair alphaToIndex;
     public:
         PowBinPolynomial(const BaseBinPolynomial<T, SZ, modPol>& pol) : BaseBinPolynomial<T, SZ, modPol>(pol) {}
@@ -259,7 +259,7 @@ namespace GFlinalg {
         static T divTable[];
     public:
         using BaseBinPolynomial<T, SZ, modPol>::order;
-        using BaseBinPolynomial<T, SZ, modPol>::GFtable;
+        using GFtable = std::array<std::array <T, order>, order>;
 
         TableBinPolynomial(const BasicBinPolynomial<T, SZ, modPol>& pol) : BasicBinPolynomial<T, SZ, modPol>(pol) {}
         TableBinPolynomial(const PowBinPolynomial<T, SZ, modPol>& pol) : BasicBinPolynomial<T, SZ, modPol>(pol.getVal()) {}

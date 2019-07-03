@@ -4,11 +4,12 @@
 #include <string>
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
-#include "GFlinalg.h"
+#include "GFlinalg.hpp"
 
 typedef GFlinalg::PowBinPolynomial<uint8_t, 3, 11> powPol;
 typedef GFlinalg::BaseBinPolynomial<uint8_t, 3, 11> basePol;
 typedef GFlinalg::BasicBinPolynomial<uint8_t, 3, 11> basicPol;
+template<>
 powPol::arrayPair powPol::alphaToIndex = powPol::makeAlphaToIndex();
 
 TEST_CASE("Basic reduction and data access", "[baseBinPolynomial]") {
@@ -56,9 +57,9 @@ TEST_CASE("Basic arithmetic", "[BasicBinPolynomial]") {
         a.val() = 42;
         b.val() = 0;
         a.reduce();
-        REQUIRE((a + b).getVal() == a.getVal());
+        REQUIRE((basicPol{0} + basicPol{42}).getVal() == basicPol{42}.getVal());
         b.val() = 3;
-        REQUIRE((a + b).getVal() == 3);
+        REQUIRE((a + b).getVal() == 5);
         b.val() = 10;
         REQUIRE((a+b).getVal() == 4);
         REQUIRE((a += b).getVal() == 4);
