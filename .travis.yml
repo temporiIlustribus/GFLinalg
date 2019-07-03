@@ -1,9 +1,15 @@
 language: cpp
-before_install:
-  - sudo apt-get install -y libbenchmark-dev
 
-compiler: clang
-dist: xenial
+compiler:
+    - clang
+    - gcc
+
+matrix:
+  include:
+    - os: linux
+      dist: xenial
+    - os: osx
+      osx_image: xcode10.2
 
 script:
   - cd build
