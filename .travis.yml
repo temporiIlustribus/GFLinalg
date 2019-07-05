@@ -3,13 +3,12 @@ language: cpp
 compiler:
     - clang
     - gcc
+os:
+    - linux
+    - osx
 
-matrix:
-  include:
-    - os: linux
-      dist: bionic
-    - os: osx
-      osx_image: xcode10.2
+dist: bionic
+osx_image: xcode10.2
 
 script:
   - mkdir build
