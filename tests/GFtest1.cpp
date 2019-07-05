@@ -13,7 +13,9 @@ typedef GFlinalg::TableBinPolynomial<uint8_t, 3, 11> tablePol;
 // Comment this if you are having problems building project
 template<>
 powPol::arrayPair powPol::alphaToIndex = powPol::makeAlphaToIndex();
+template<>
 tablePol::GFtable tablePol::mulTable = tablePol::makeMulTable();
+template<>
 tablePol::GFtable tablePol::divTable = tablePol::makeInvMulTable();
 
 
