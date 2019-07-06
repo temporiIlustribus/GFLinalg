@@ -5,19 +5,43 @@
 
 namespace GFlinalg {
 
-    template <class T, size_t SZ, T modPol>
-    class  BaseBinPolynomial {
-    public:
+    /*
+   Basic GF element class. All math operations are done directly in polynomial form
+       Operation complexity:
+       " + " - O(1)
+       " * " - O(n^2)
+       " / " - O(log^2(order) + n^2)
+   */
+    template <class T, T modPol>
+    class  BasicBinPolynomial {
+    protected:
+        constexpr static uint8_t modPolDegree() {
+            uint8_t pos = 0;
+            uint8_t containerSize = sizeof(T) << 3;
+            for (uint8_t i = 1; i < containerSize + 1; ++i) {
+                pos = containerSize - i;
+                if ((modPol >> pos) & 1) break;
+            }
+            return pos;
+        }
+
+        T value;
+        constexpr static size_t SZ = modPolDegree();
+        uint8_t deg;
         constexpr static size_t order = 1 << SZ;
     protected:
-        T value;
-        uint8_t deg;
-
+        // Get the position of the leading 1 in the polynomial
+        static uint8_t leadElemPos(const T& pol, uint8_t startPos = 1) {
+            uint8_t pos = 0;
+            for (uint8_t i = startPos; i < order + 1; ++i) {
+                pos = order - i;
+                if ((pol >> pos) & 1) break;
+            }
+            return order - pos;
+        }
         // Internal multiplication version 1
-        static BaseBinPolynomial polMul(const BaseBinPolynomial& a, const BaseBinPolynomial& b) {
-            BaseBinPolynomial res(0);
-            uint8_t leadPos = a.degree();
-            uint8_t modLeadPos = b.degree();
+        static BasicBinPolynomial polMul(const BasicBinPolynomial& a, const BasicBinPolynomial& b) {
+            BasicBinPolynomial res(0);
             for (size_t i = 0; i < order; ++i) {
                 if ((b.value >> i) & 1) {
                     res.value ^= a.getVal() << i;
@@ -28,46 +52,33 @@ namespace GFlinalg {
         }
 
         // Internal addition
-        static BaseBinPolynomial polSum(const BaseBinPolynomial& a, const BaseBinPolynomial& b) {
-            BaseBinPolynomial res(a.value ^ b.value);
+        static BasicBinPolynomial polSum(const BasicBinPolynomial& a, const BasicBinPolynomial& b) {
+            BasicBinPolynomial res(a.value ^ b.value);
             return res;
         }
 
         // Internal division
-        static BaseBinPolynomial polDiv(const BaseBinPolynomial& a, const BaseBinPolynomial& b) {
+        static BasicBinPolynomial polDiv(const BasicBinPolynomial& a, const BasicBinPolynomial& b) {
             // Get b^-1: a / b = a * b^-1
-            auto invB = galoisPow(b, order - 2);
+            auto invB = pow(b, order - 2);
             return polMul(a, invB);
-        }
-
-        // Get the position of the leading 1 in the polynomial
-        static uint8_t leadElemPos(const T& pol, size_t startPos=1) {
-            uint8_t pos = 0;
-            for (uint8_t i = startPos; i < order+1; ++i) {
-                if (pol >> (order - i) & 1) {
-                    pos = i;
-                    break;
-                }
-            }
-            return pos;
         }
 
         void reduce(const T& modulus) {
             auto pos = leadElemPos(modulus);
             // Reduce by modulus
             uint8_t i = 1;
-            while (value >= 1 << (order - pos)) {
+            while (value >= 1U << (order - pos)) {
                 if ((value >> (order - i)) & 1)
                     value ^= modulus << (pos - i);
                 ++i;
             }
-            deg = order - leadElemPos(value, pos);
+            updateDegree();
         }
 
     public:
-
-        BaseBinPolynomial() : value(0), deg(0) {}
-        BaseBinPolynomial(const T& val) : value(val), deg(0) {
+        explicit BasicBinPolynomial() : value(0), deg(0) {}
+        explicit BasicBinPolynomial(const T& val) : value(val), deg(0) {
             reduce();
         }
         /*
@@ -76,7 +87,7 @@ namespace GFlinalg {
             Example 2: {1,1,1,0,0,1} -> x^5 + x^4 + x^3 + 1 (111001)
         */
         template<typename Iter>
-        BaseBinPolynomial(Iter first, Iter last): value(0), deg(0) {
+        explicit BasicBinPolynomial(Iter first, Iter last) : value(0), deg(0) {
             while (first != last) {
                 value |= (static_cast<T>(*first) & 1);
                 value <<= 1;
@@ -84,81 +95,125 @@ namespace GFlinalg {
             reduce();
         }
 
+        // Returns copy of the polynomial in the contained form
         T getVal() const { return value; }
+        /*
+        Returns polynomial in the contained form
+            Note: using this operator to alter contained value violates internal
+                  invariant. To resolve, use "reduce()" method.
+
+        */
         T& val() { return value; }
-        size_t gfSize() const { return SZ; }
-        size_t  gfOrder() const { return order; }
+        // For GF(2^n) returns n
+        static size_t gfSize() { return SZ; }
+        // For GF(2^n) returns 2^n
+        static size_t  gfOrder() { return order; }
+        // Returns the degree of the polynomial
         size_t degree() const { return deg; }
-        size_t updateDegree(size_t startPos = 1) { 
+        // Recalculates the degree of the polynomial
+        size_t updateDegree(size_t startPos = 1) {
             deg = order - leadElemPos(value, startPos);
             return  deg;
         }
+        // Reduces polynomial by modulus polynomial (modPol)
         void reduce() { reduce(modPol); }
+        /*
+        Returns inverse of polynomial
+            e.g. For polynomial "a" returns "a^(-1)" such that:
+            a * a^(-1) == a^(-1) * a == 1
+        */
+        BasicBinPolynomial getInverse() {
+            return pow(*this, order - 2);
+        }
+        /*
+        Inverts polynomial
+            e.g. For polynomial "a" calculates a^(-1) such that:
+            a * a^(-1) == a^(-1) * a == 1
+            and sets a = a^(-1)
+        */
+        BasicBinPolynomial& invert() {
+            *this = pow(*this, order - 2);
+            return *this;
+        }
         template <class T1>
         operator T1() { return static_cast<T1>(value); }
 
-        BaseBinPolynomial& operator ++() {
-            ++value;
-            reduce();
-            return *this;
+        BasicBinPolynomial operator + (const BasicBinPolynomial& other) const {
+            return this->polSum(*this, other);
         }
-        BaseBinPolynomial& operator --() {
-            --value;
-            if (value == T(-1)) {
-                reduce();
-            }
+
+        BasicBinPolynomial& operator += (const BasicBinPolynomial& other) {
+            *this = this->polSum(*this, other);
             return *this;
         }
 
-        template <class T1, size_t SZ1, T1 modPol1>
-        friend BaseBinPolynomial<T1, SZ1, modPol1> galoisPow(BaseBinPolynomial<T1, SZ1, modPol1> val, size_t power);
+        BasicBinPolynomial operator * (const BasicBinPolynomial& other) const {
+            return this->polMul(*this, other);
+        }
 
-        template <class T1, size_t SZ1, T1 modPol1>
-        friend bool operator == (const BaseBinPolynomial<T1, SZ1, modPol1>&  lhs, const BaseBinPolynomial<T1, SZ1, modPol1>& rhs);
-        template <class T1, size_t SZ1, T1 modPol1>
-        friend bool operator != (const BaseBinPolynomial<T1, SZ1, modPol1>&  lhs, const BaseBinPolynomial<T1, SZ1, modPol1>& rhs);
+        BasicBinPolynomial& operator *= (const BasicBinPolynomial& other) {
+            *this = this->polMul(*this, other);
+            return *this;
+        }
 
-        template <class T1, size_t SZ1, T1 modPol1>
-        friend bool operator < (const BaseBinPolynomial<T1, SZ1, modPol1>&  lhs, const BaseBinPolynomial<T1, SZ1, modPol1>& rhs);
-        template <class T1, size_t SZ1, T1 modPol1>
-        friend bool operator > (const BaseBinPolynomial<T1, SZ1, modPol1>&  lhs, const BaseBinPolynomial<T1, SZ1, modPol1>& rhs);
-        template <class T1, size_t SZ1, T1 modPol1>
-        friend bool operator <= (const BaseBinPolynomial<T1, SZ1, modPol1>&  lhs, const BaseBinPolynomial<T1, SZ1, modPol1>& rhs);
-        template <class T1, size_t SZ1, T1 modPol1>
-        friend bool operator >= (const BaseBinPolynomial<T1, SZ1, modPol1>&  lhs, const BaseBinPolynomial<T1, SZ1, modPol1>& rhs);
+        BasicBinPolynomial operator / (const BasicBinPolynomial& other) const {
+            return this->polDiv(*this, other);
+        }
+
+        BasicBinPolynomial& operator /= (const BasicBinPolynomial& other) {
+            *this = this->polDiv(*this, other);
+            return *this;
+        }
+
+        template <class T1, T1 modPol1>
+        friend BasicBinPolynomial<T1, modPol1> pow(BasicBinPolynomial<T1, modPol1> val, size_t power);
+
+        template <class T1, T1 modPol1>
+        friend bool operator == (const BasicBinPolynomial<T1, modPol1>& lhs, const BasicBinPolynomial<T1, modPol1>& rhs);
+        template <class T1, T1 modPol1>
+        friend bool operator != (const BasicBinPolynomial<T1, modPol1>& lhs, const BasicBinPolynomial<T1, modPol1>& rhs);
+
+        template <class T1, T1 modPol1>
+        friend bool operator < (const BasicBinPolynomial<T1, modPol1>& lhs, const BasicBinPolynomial<T1, modPol1>& rhs);
+        template <class T1, T1 modPol1>
+        friend bool operator > (const BasicBinPolynomial<T1, modPol1>& lhs, const BasicBinPolynomial<T1, modPol1>& rhs);
+        template <class T1, T1 modPol1>
+        friend bool operator <= (const BasicBinPolynomial<T1, modPol1>& lhs, const BasicBinPolynomial<T1, modPol1>& rhs);
+        template <class T1, T1 modPol1>
+        friend bool operator >= (const BasicBinPolynomial<T1, modPol1>& lhs, const BasicBinPolynomial<T1, modPol1>& rhs);
     };
-    template <class T, size_t SZ, T modPol>
-    bool operator == (const BaseBinPolynomial<T, SZ, modPol>&  lhs, const BaseBinPolynomial<T, SZ, modPol>& rhs) {
+    template <class T, T modPol>
+    bool operator == (const BasicBinPolynomial<T, modPol>&  lhs, const BasicBinPolynomial<T, modPol>& rhs) {
         return lhs.value == rhs.value;
     }
 
-    template <class T, size_t SZ, T modPol>
-    bool operator != (const BaseBinPolynomial<T, SZ, modPol>&  lhs, const BaseBinPolynomial<T, SZ, modPol>& rhs) {
+    template <class T, T modPol>
+    bool operator != (const BasicBinPolynomial<T, modPol>&  lhs, const BasicBinPolynomial<T, modPol>& rhs) {
         return lhs.value != rhs.value;
     }
 
-    template <class T, size_t SZ, T modPol>
-    bool operator < (const BaseBinPolynomial<T, SZ, modPol>&  lhs, const BaseBinPolynomial<T, SZ, modPol>& rhs) {
+    template <class T, T modPol>
+    bool operator < (const BasicBinPolynomial<T, modPol>&  lhs, const BasicBinPolynomial<T, modPol>& rhs) {
         return lhs.value < rhs.value;
     }
 
-    template <class T, size_t SZ, T modPol>
-    bool operator > (const BaseBinPolynomial<T, SZ, modPol>&  lhs, const BaseBinPolynomial<T, SZ, modPol>& rhs) {
+    template <class T, T modPol>
+    bool operator > (const BasicBinPolynomial<T, modPol>&  lhs, const BasicBinPolynomial<T, modPol>& rhs) {
         return lhs.value > rhs.value;
     }
 
-    template <class T, size_t SZ, T modPol>
-    bool operator <= (const BaseBinPolynomial<T, SZ, modPol>&  lhs, const BaseBinPolynomial<T, SZ, modPol>& rhs) {
+    template <class T, T modPol>
+    bool operator <= (const BasicBinPolynomial<T, modPol>&  lhs, const BasicBinPolynomial<T, modPol>& rhs) {
         return lhs.value <= rhs.value;
     }
 
-    template <class T, size_t SZ, T modPol>
-    bool operator >= (const BaseBinPolynomial<T, SZ, modPol>&  lhs, const BaseBinPolynomial<T, SZ, modPol>& rhs) {
+    template <class T, T modPol>
+    bool operator >= (const BasicBinPolynomial<T, modPol>&  lhs, const BasicBinPolynomial<T, modPol>& rhs) {
         return lhs.value >= rhs.value;
     }
 
-    template <class T, size_t SZ, T modPol>
-    std::ostream& operator << (std::ostream& out, BaseBinPolynomial<T, SZ, modPol> pol) {
+    template <class T, T modPol>
+    std::ostream& operator << (std::ostream& out, BasicBinPolynomial<T, modPol> pol) {
         size_t deg = pol.degree();
         bool flag = false;
         while (pol.getVal()) {
@@ -180,61 +235,20 @@ namespace GFlinalg {
         return out;
     }
 
-    template <class T, size_t SZ, T modPol>
-    BaseBinPolynomial<T, SZ, modPol> galoisPow(BaseBinPolynomial<T, SZ, modPol> val, size_t power) {
-        BaseBinPolynomial<T, SZ, modPol> res{1};
+    template <class T, T modPol>
+    BasicBinPolynomial<T, modPol> pow(BasicBinPolynomial<T, modPol> val, size_t power) {
+        BasicBinPolynomial<T, modPol> res{1};
         while (power) {
             if (power & 1) {
-                res = BaseBinPolynomial<T, SZ, modPol>::polMul(res, val);
+                res = BasicBinPolynomial<T, modPol>::polMul(res, val);
                 --power;
             } else {
-                val = BaseBinPolynomial<T, SZ, modPol>::polMul(val, val);
+                val = BasicBinPolynomial<T, modPol>::polMul(val, val);
                 power >>= 1;
             }
         }
         return res;
     }
-
-    /*
-    Basic GF element class. All math operations are done directly in polynomial form
-        Operation complexity:
-        " + " - O(1)
-        " * " - O(n^2)
-        " / " - O(log^2(order) + n^2)
-    */
-    template <class T, size_t SZ, T modPol>
-    class BasicBinPolynomial : public BaseBinPolynomial<T, SZ, modPol> {
-    public:
-        using BaseBinPolynomial<T, SZ, modPol>::BaseBinPolynomial;
-        BasicBinPolynomial(const BaseBinPolynomial<T, SZ, modPol>& pol) : BaseBinPolynomial<T, SZ, modPol>(pol) {}
-        BasicBinPolynomial operator * (const BasicBinPolynomial& other) const {
-            return this->polMul(*this, other);
-        }
-
-        BasicBinPolynomial& operator *= (const BasicBinPolynomial& other) {
-            *this = this->polMul(*this, other);
-            return *this;
-        }
-
-        BasicBinPolynomial operator / (const BasicBinPolynomial& other) const {
-            return this->polDiv(*this, other);
-        }
-
-        BasicBinPolynomial& operator /= (const BasicBinPolynomial& other) {
-            *this = this->polDiv(*this, other);
-            return *this;
-        }
-
-        BasicBinPolynomial operator + (const BasicBinPolynomial& other) const {
-            return this->polSum(*this, other);
-        }
-
-        BasicBinPolynomial& operator += (const BasicBinPolynomial& other) {
-            *this = this->polSum(*this, other);
-            return *this;
-        }
-    };
-
 
 
     /*
@@ -244,89 +258,86 @@ namespace GFlinalg {
         " * " - O(1)
         " / " - O(1)
     */
-    template <class T, size_t SZ, T modPol>
-    class PowBinPolynomial : public BaseBinPolynomial<T, SZ, modPol> {
-    public:
-        using BaseBinPolynomial<T, SZ, modPol>::value;
-        using BaseBinPolynomial<T, SZ, modPol>::order;
-        using BaseBinPolynomial<T, SZ, modPol>::polSum;
+    template <class T, T modPol>
+    class PowBinPolynomial : public BasicBinPolynomial<T, modPol> {
     private:
-        using arrayPair = std::pair<std::array<T, (order - 1) << 1>, std::array<size_t, order>>;
-        static arrayPair alphaToIndex;
+        using BasicBinPolynomial<T, modPol>::order;
+        using BasicBinPolynomial<T, modPol>::value;
+        using BasicBinPolynomial<T, modPol>::polSum;
+        struct ArrayPair {
+            std::array<T, (order - 1) << 1> indToPol;
+            std::array<size_t, order> polToInd;
+            ArrayPair() : polToInd(), indToPol() {}
+            ArrayPair(const std::array<T, (order - 1) * 2>& alph, const std::array<size_t, order>& ind) : indToPol(alph), polToInd(ind) {}
+            ArrayPair(const std::pair<std::array<T, (order - 1) * 2>, std::array<size_t, order>>& val) : indToPol(val.first), polToInd(val.second) {}
+        };
+        static ArrayPair alphaToIndex;
     public:
-        PowBinPolynomial(const BaseBinPolynomial<T, SZ, modPol>& pol) : BaseBinPolynomial<T, SZ, modPol>(pol) {}
+        using BasicBinPolynomial<T, modPol>::BasicBinPolynomial;
+        explicit PowBinPolynomial(const BasicBinPolynomial<T, modPol>& pol) : BasicBinPolynomial<T, modPol>(pol) {}
         /*
-        Creates a pair of vectors (arrayPair):
-            first: power of primitive element -> polynomial
-            second: polynomial -> power of primitive element
+        Creates a pair of vectors (ArrayPair):
+            indToPol: power of primitive element -> polynomial
+            polToInd: polynomial -> power of primitive element
         */
-        static constexpr auto makeAlphaToIndex() {
-            std::array<T, (order - 1) * 2> alpha;
-            std::array<size_t, order> index;
+        static constexpr ArrayPair makeAlphaToIndex() {
+            ArrayPair temp;
             T counter = 1;
             for (size_t i = 0; i < order - 1; ++i) {
-                alpha[i] = BasicBinPolynomial<T, SZ, modPol>(counter).getVal();
-                index[alpha[i]] = i;
+                temp.indToPol[i] = BasicBinPolynomial<T, modPol>(counter).getVal();
+                temp.polToInd[temp.indToPol[i]] = i;
                 counter <<= 1;
             }
             // This is to avoid % operations in math operators
-            for (size_t i = order - 1; i < alpha.size(); ++i)
-                alpha[i] = alpha[i - order + 1];
+            for (size_t i = order - 1; i < temp.indToPol.size(); ++i)
+                temp.indToPol[i] = temp.indToPol[i - order + 1];
 
-            return std::make_pair(alpha, index);
-        }
-
-        // Debug function
-        static void printAlpha() {
-            for (size_t i = 0; i < order - 1; ++i) {
-                std::cout << static_cast<size_t>(alphaToIndex.first[i]);
-                std::cout << " : " << static_cast<size_t>(alphaToIndex.second[alphaToIndex.first[i]]) << "\n";
-            }
+            return temp;
         }
 
         /*
-        Returns a pair of vectors (arrayPair):
-            first: power of primitive element -> polynomial
-            second: polynomial -> power of primitive element
+        Returns a pair of vectors (ArrayPair):
+            indToPol: power of primitive element -> polynomial
+            polToInd: polynomial -> power of primitive element
         */
-        static arrayPair getAlphaToIndex() {
+        static ArrayPair getAlphaToIndex() {
             return alphaToIndex;
         }
 
         PowBinPolynomial operator * (const PowBinPolynomial& other) const {
             if (this->value == 0 || other.value == 0)
                 return PowBinPolynomial(0);
-            return PowBinPolynomial(alphaToIndex.first[alphaToIndex.second[this->value] +
-                                    alphaToIndex.second[other.value]]);
+            return PowBinPolynomial(alphaToIndex.indToPol[alphaToIndex.polToInd[this->value] +
+                                    alphaToIndex.polToInd[other.value]]);
         }
 
         PowBinPolynomial& operator *= (const PowBinPolynomial& other) {
-            this->val() = alphaToIndex.first[alphaToIndex.second[this->value] +
-                alphaToIndex.second[other.value]];
+            this->val() = alphaToIndex.indToPol[alphaToIndex.polToInd[this->value] +
+                alphaToIndex.polToInd[other.value]];
             return *this;
         }
 
         PowBinPolynomial operator / (const PowBinPolynomial& other) const {
             if (value == 0)
                 return PowBinPolynomial(0);
-            auto temp(alphaToIndex.second[this->value]);
-            if (temp < alphaToIndex.second[other.value])
+            auto temp(alphaToIndex.polToInd[this->value]);
+            if (temp < alphaToIndex.polToInd[other.value])
                 temp += order - 1;
-            return PowBinPolynomial(alphaToIndex.first[temp - alphaToIndex.second[other.value]]);
+            return PowBinPolynomial(alphaToIndex.indToPol[temp - alphaToIndex.polToInd[other.value]]);
         }
 
         PowBinPolynomial& operator /= (const PowBinPolynomial& other) {
             if (value == 0)
                 return PowBinPolynomial(0);
-            auto temp(alphaToIndex.second[this->value]);
-            if (temp < alphaToIndex.second[other.value])
+            auto temp(alphaToIndex.polToInd[this->value]);
+            if (temp < alphaToIndex.polToInd[other.value])
                 temp += order - 1;
-            *this->val = alphaToIndex.first[temp - alphaToIndex.second[other.value]];
+            *this->val = alphaToIndex.indToPol[temp - alphaToIndex.polToInd[other.value]];
             return *this;
         }
 
         PowBinPolynomial operator + (const PowBinPolynomial& other) const {
-            return PowBinPolynomial(polSum(this->value, other.value));
+            return PowBinPolynomial(polSum(*this, other));
         }
 
         PowBinPolynomial operator += (const PowBinPolynomial& other) {
@@ -342,21 +353,20 @@ namespace GFlinalg {
         " * " - O(1)
         " / " - O(1)
     */
-    template <class T, size_t SZ, T modPol>
-    class TableBinPolynomial : public BasicBinPolynomial<T, SZ, modPol> {
+    template <class T, T modPol>
+    class TableBinPolynomial : public BasicBinPolynomial<T, modPol> {
     public:
-        using BaseBinPolynomial<T, SZ, modPol>::order;
-        using BaseBinPolynomial<T, SZ, modPol>::getVal;
-        using BaseBinPolynomial<T, SZ, modPol>::val;
-        using BasicBinPolynomial<T, SZ, modPol>::operator+;
+        using BasicBinPolynomial<T, modPol>::order;
+        using BasicBinPolynomial<T, modPol>::value;
+        using BasicBinPolynomial<T, modPol>::polSum;
+        using BasicBinPolynomial<T, modPol>::BasicBinPolynomial;
         using GFtable = std::array<std::array<T, order>, order>;
     private:
         static GFtable mulTable;
         static GFtable divTable;
     public:
 
-        TableBinPolynomial(const BasicBinPolynomial<T, SZ, modPol>& pol) : BasicBinPolynomial<T, SZ, modPol>(pol) {}
-        TableBinPolynomial(const PowBinPolynomial<T, SZ, modPol>& pol) : BasicBinPolynomial<T, SZ, modPol>(pol.getVal()) {}
+        explicit TableBinPolynomial(const BasicBinPolynomial<T, modPol>& pol) : BasicBinPolynomial<T, modPol>(pol) {}
 
 
         /*
@@ -368,8 +378,8 @@ namespace GFlinalg {
             // Note: requires checking whether we have traversed through all elements
             for (size_t i = 0; i < order; ++i) {
                 for (size_t j = i; j < order; ++j) {
-                    BasicBinPolynomial<T, SZ, modPol> a(i);
-                    BasicBinPolynomial<T, SZ, modPol> b(j);
+                    BasicBinPolynomial<T, modPol> a(i);
+                    BasicBinPolynomial<T, modPol> b(j);
                     temp[a.val()][b.val()] = (a * b).val();
                     temp[b.val()][a.val()] = temp[a.val()][b.val()];
                 }
@@ -389,8 +399,8 @@ namespace GFlinalg {
             GFtable temp;
             for (size_t i = 0; i < order; ++i) {
                 for (size_t j = i; j < order; ++j) {
-                    BasicBinPolynomial<T, SZ, modPol> a(i);
-                    BasicBinPolynomial<T, SZ, modPol> b(j);
+                    BasicBinPolynomial<T, modPol> a(i);
+                    BasicBinPolynomial<T, modPol> b(j);
                     temp[mulTable[a.val()][b.val()]][a.val()] = b.val();
                     temp[mulTable[a.val()][b.val()]][b.val()] = a.val();
                 }
@@ -406,8 +416,8 @@ namespace GFlinalg {
             GFtable temp;
             for (size_t i = 0; i < order; ++i) {
                 for (size_t j = 0; j < order; ++j) {
-                    BasicBinPolynomial<T, SZ, modPol> a(i);
-                    BasicBinPolynomial<T, SZ, modPol> b(j);
+                    BasicBinPolynomial<T, modPol> a(i);
+                    BasicBinPolynomial<T, modPol> b(j);
                     temp[a.value][b.value] = (a / b).getVal();
                 }
             }
@@ -415,23 +425,31 @@ namespace GFlinalg {
             return temp;
         }
 
-        using BasicBinPolynomial<T, SZ, modPol>::BasicBinPolynomial;
+
+        TableBinPolynomial operator + (const TableBinPolynomial& other) const {
+            return TableBinPolynomial(polSum(*this, other));
+        }
+
+        TableBinPolynomial& operator += (const TableBinPolynomial& other) {
+            *this = *this + other;
+            return *this;
+        }
 
         TableBinPolynomial operator * (const TableBinPolynomial& other) const {
-            return mulTable[this->getVal()][other.getVal()];
+            return TableBinPolynomial(mulTable[this->getVal()][other.getVal()]);
         }
 
         TableBinPolynomial& operator *= (const TableBinPolynomial& other) {
-            this->val() = *this * other;
+            *this = *this * other;
             return *this;
         }
 
         TableBinPolynomial operator / (const TableBinPolynomial& other) const {
-            return divTable[this->getVal()][other.getVal()];
+            return TableBinPolynomial(divTable[this->getVal()][other.getVal()]);
         }
 
         TableBinPolynomial& operator /= (const TableBinPolynomial& other) {
-            this->val() = *this / other;
+            *this = *this / other;
             return *this;
         }
     };
