@@ -18,21 +18,21 @@ typedef GFlinalg::PowBinPolynomial<uint32_t, 37> powPol32;
 typedef GFlinalg::TableBinPolynomial<uint32_t, 37> tablePol32;
 // Comment this if you are having problems building project
 template<>
-const powPol8::ArrayPair powPol8::alphaToIndex = powPol8::makeAlphaToIndex();
+const powPol8::LUTPair powPol8::alphaToIndex = powPol8::makeAlphaToIndex();
 template<>
 const tablePol8::GFtable tablePol8::mulTable = tablePol8::makeMulTable();
 template<>
 const tablePol8::GFtable tablePol8::divTable = tablePol8::makeInvMulTable();
 
 template<>
-const powPol16::ArrayPair powPol16::alphaToIndex = powPol16::makeAlphaToIndex();
+const powPol16::LUTPair powPol16::alphaToIndex = powPol16::makeAlphaToIndex();
 template<>                                     
 const tablePol16::GFtable tablePol16::mulTable = tablePol16::makeMulTable();
 template<>                                     
 const tablePol16::GFtable tablePol16::divTable = tablePol16::makeInvMulTable();
 
 template<>
-const powPol32::ArrayPair powPol32::alphaToIndex = powPol32::makeAlphaToIndex();
+const powPol32::LUTPair powPol32::alphaToIndex = powPol32::makeAlphaToIndex();
 template<>                                     
 const tablePol32::GFtable tablePol32::mulTable = tablePol32::makeMulTable();
 template<>                                     
@@ -41,7 +41,7 @@ const tablePol32::GFtable tablePol32::divTable = tablePol32::makeInvMulTable();
 template <class Pol>
 static void BM_Reduction(benchmark::State& state) {
     Pol testVal(0);
-    std::uniform_int_distribution<uint32_t> uid(0, (1 << Pol::gfSize()) - 1);
+    std::uniform_int_distribution<uint32_t> uid(0, (1 << Pol::gfDegree()) - 1);
     std::default_random_engine rd;
     for (auto _ : state) {
         testVal.val() = uid(rd);
@@ -63,7 +63,7 @@ BENCHMARK_TEMPLATE(BM_Reduction, tablePol32);
 template <class Pol>
 static void BM_Addition(benchmark::State& state) {
     Pol temp(0);
-    std::uniform_int_distribution<uint32_t> uid(0, (1 << Pol::gfSize()) - 1);
+    std::uniform_int_distribution<uint32_t> uid(0, (1 << Pol::gfDegree()) - 1);
     std::default_random_engine rd;
     for (auto _ : state) {
         Pol a(uid(rd));
@@ -86,7 +86,7 @@ BENCHMARK_TEMPLATE(BM_Addition, tablePol32);
 template <class Pol>
 static void BM_Mul(benchmark::State& state) {
     Pol temp(0);
-    std::uniform_int_distribution<uint32_t> uid(0, (1 << Pol::gfSize()) - 1);
+    std::uniform_int_distribution<uint32_t> uid(0, (1 << Pol::gfDegree()) - 1);
     std::default_random_engine rd;
     for (auto _ : state) {
         Pol a(uid(rd));
@@ -128,8 +128,8 @@ BENCHMARK_TEMPLATE(BM_MulAlt, tablePol32);
 template <class Pol>
 static void BM_Div(benchmark::State& state) {
     Pol temp(0);
-    std::uniform_int_distribution<uint32_t> uid1(1, (1 << Pol::gfSize()) - 1);
-    std::uniform_int_distribution<uint32_t> uid2(0, (1 << Pol::gfSize()) - 1);
+    std::uniform_int_distribution<uint32_t> uid1(1, (1 << Pol::gfDegree()) - 1);
+    std::uniform_int_distribution<uint32_t> uid2(0, (1 << Pol::gfDegree()) - 1);
     std::default_random_engine rd;
     for (auto _ : state) {
         Pol a(uid2(rd));

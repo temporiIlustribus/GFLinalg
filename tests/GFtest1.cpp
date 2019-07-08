@@ -13,7 +13,7 @@ typedef GFlinalg::TableBinPolynomial<uint8_t, 11> tablePol;
 typedef GFlinalg::BasicGFElem<uint8_t> basicElem;
 // Comment this if you are having problems building project
 template<>
-const powPol::ArrayPair powPol::alphaToIndex = powPol::makeAlphaToIndex();
+const powPol::LUTPair powPol::alphaToIndex = powPol::makeAlphaToIndex();
 template<>
 const tablePol::GFtable tablePol::mulTable = tablePol::makeMulTable();
 template<>
@@ -34,11 +34,12 @@ TEST_CASE("Basic arithmetic", "[BasicBinPolynomial]") {
         REQUIRE(a.val() == 1);
         REQUIRE(basicPol(a).getVal() == 1);
         REQUIRE(basicPol(a.getVal() + 2).getVal() == 3);
-        REQUIRE(a.gfSize() == 3);
+        REQUIRE(a.gfDegree() == 3);
     }
     SECTION("Addition") {
         basicPol a(10);
         basicPol b(1);
+        REQUIRE((tablePol{1}+a).getVal() == 0);
         REQUIRE(a.getVal() == 1);
         REQUIRE(b.getVal() == 1);
         REQUIRE((a + b).getVal() == 0);
@@ -55,6 +56,7 @@ TEST_CASE("Basic arithmetic", "[BasicBinPolynomial]") {
         basicPol b(1);
         REQUIRE(a.getVal() == 1);
         REQUIRE(b.getVal() == 1);
+        REQUIRE((tablePol{1} * a).getVal() == 1);
         REQUIRE((a * b).getVal() == 1);
         REQUIRE(basicPol(42) * basicPol(42) == basicPol(2));
         REQUIRE(basicPol(42) * basicPol(0) == basicPol(0));
@@ -110,7 +112,7 @@ TEST_CASE("Pow arithmetic", "[PowBinPolynomial]") {
         REQUIRE(a.val() == 1);
         a.val() += 2;
         REQUIRE(a.getVal() == 3);
-        REQUIRE(a.gfSize() == 3);
+        REQUIRE(a.gfDegree() == 3);
     }
     SECTION("Addition") {
         powPol a(10);
@@ -186,7 +188,7 @@ TEST_CASE("Table arithmetic", "[TableBinPolynomial]") {
         REQUIRE(a.val() == 1);
         a.val() += 2;
         REQUIRE(a.getVal() == 3);
-        REQUIRE(a.gfSize() == 3);
+        REQUIRE(a.gfDegree() == 3);
     }
     SECTION("Addition") {
         tablePol a(10);
@@ -263,7 +265,7 @@ TEST_CASE("Basic single template param arithmetic", "[BasicGFElem]") {
        REQUIRE(a.getVal() == 1);
        REQUIRE(basicElem(a).getVal() == 1);
        REQUIRE(basicElem(a.getVal() + 2,11).getVal() == 3);
-       REQUIRE(a.gfSize() == 3);
+       REQUIRE(a.gfDegree() == 3);
    }
    SECTION("Addition") {
        basicElem a(10, 11);
@@ -324,7 +326,6 @@ TEST_CASE("Basic single template param arithmetic", "[BasicGFElem]") {
        REQUIRE(basicElem(176, 11) <= basicElem(0, 11));
        
    }
-   std::system("pause");
 }
 
 

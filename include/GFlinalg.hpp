@@ -1,8 +1,10 @@
 #pragma once
+#include <any>
+#include <array>
+#include <stdexcept>
 #include <iostream>
 #include <memory>
-#include <array>
-#include <any>
+
 
 namespace GFlinalg {
 
@@ -51,20 +53,19 @@ namespace GFlinalg {
             return res;
         }
 
-        static BasicBinPolynomial polMul(const BasicBinPolynomial &a, const BasicBinPolynomial &b)
-        {
-          BasicBinPolynomial res{};
-          auto av = a.value;
-          auto bv = b.value;
-          while (bv > 0) {
-            if (bv & 1)
-              res.val() ^= av;
-            bv >>= 1;
-            av <<= 1;
-            if (av & BasicBinPolynomial::gfOrder())
-              av ^= BasicBinPolynomial::modpol;
-          }
-          return res;
+        static BasicBinPolynomial polMul(const BasicBinPolynomial &a, const BasicBinPolynomial &b) {
+            BasicBinPolynomial res{};
+            auto av = a.value;
+            auto bv = b.value;
+            while (bv > 0) {
+                if (bv & 1)
+                    res.val() ^= av;
+                bv >>= 1;
+                av <<= 1;
+                if (av & BasicBinPolynomial::gfOrder())
+                    av ^= BasicBinPolynomial::modpol;
+            }
+            return res;
         }
 
         // Internal addition
@@ -77,7 +78,7 @@ namespace GFlinalg {
         static BasicBinPolynomial polDiv(const BasicBinPolynomial& a, const BasicBinPolynomial& b) {
             // Get b^-1: a / b = a * b^-1
             if (b.value == 0)
-                throw std::runtime_error("Division by zero");
+                throw std::out_of_range("Division by zero");
             auto invB = pow(b, order - 2);
             return polMul(a, invB);
         }
@@ -112,7 +113,7 @@ namespace GFlinalg {
         T& val() { return value; }
         static constexpr T modpol = modPol;
         // For GF(2^n) returns n
-        static size_t gfSize() { return SZ; }
+        static size_t gfDegree() { return SZ; }
         // For GF(2^n) returns 2^n
         static size_t  gfOrder() { return order; }
         // Recalculates the degree of the polynomial
@@ -153,8 +154,8 @@ namespace GFlinalg {
         template <class T1>
         explicit operator T1() { return static_cast<T1>(value); }
 
-        BasicBinPolynomial operator + (const BasicBinPolynomial& other) const {
-            return this->polSum(*this, other);
+        friend BasicBinPolynomial operator + (const BasicBinPolynomial& a, const BasicBinPolynomial& b) {
+            return BasicBinPolynomial::polSum(a, b);
         }
 
         BasicBinPolynomial& operator += (const BasicBinPolynomial& other) {
@@ -162,8 +163,8 @@ namespace GFlinalg {
             return *this;
         }
 
-        BasicBinPolynomial operator * (const BasicBinPolynomial& other) const {
-            return this->polMul(*this, other);
+        friend BasicBinPolynomial operator * (const BasicBinPolynomial& a, const BasicBinPolynomial& b) {
+            return BasicBinPolynomial::polMul(a, b);
         }
 
         BasicBinPolynomial& operator *= (const BasicBinPolynomial& other) {
@@ -171,8 +172,8 @@ namespace GFlinalg {
             return *this;
         }
 
-        BasicBinPolynomial operator / (const BasicBinPolynomial& other) const {
-            return this->polDiv(*this, other);
+        friend BasicBinPolynomial operator / (const BasicBinPolynomial& a, const BasicBinPolynomial& b) {
+            return BasicBinPolynomial::polDiv(a, b);
         }
 
         BasicBinPolynomial& operator /= (const BasicBinPolynomial& other) {
@@ -279,24 +280,24 @@ namespace GFlinalg {
         using BasicBinPolynomial<T, modPol>::order;
         using BasicBinPolynomial<T, modPol>::value;
         using BasicBinPolynomial<T, modPol>::polSum;
-        struct ArrayPair {
+        struct  LUTPair {
             std::array<T, (order - 1) << 1> indToPol;
             std::array<size_t, order> polToInd;
-            ArrayPair() : polToInd(), indToPol() {}
-            ArrayPair(const std::array<T, (order - 1) * 2>& alph, const std::array<size_t, order>& ind) : indToPol(alph), polToInd(ind) {}
-            ArrayPair(const std::pair<std::array<T, (order - 1) * 2>, std::array<size_t, order>>& val) : indToPol(val.first), polToInd(val.second) {}
+            LUTPair() : polToInd(), indToPol() {}
+            LUTPair(const std::array<T, (order - 1) * 2>& alph, const std::array<size_t, order>& ind) : indToPol(alph), polToInd(ind) {}
+            LUTPair(const std::pair<std::array<T, (order - 1) * 2>, std::array<size_t, order>>& val) : indToPol(val.first), polToInd(val.second) {}
         };
-        const static ArrayPair alphaToIndex;
+        const static LUTPair alphaToIndex;
     public:
         using BasicBinPolynomial<T, modPol>::BasicBinPolynomial;
         explicit PowBinPolynomial(const BasicBinPolynomial<T, modPol>& pol) : BasicBinPolynomial<T, modPol>(pol) {}
         /*
-        Creates a pair of vectors (ArrayPair):
+        Creates a pair of vectors (LUTPair):
             indToPol: power of primitive element -> polynomial
             polToInd: polynomial -> power of primitive element
         */
-        static constexpr ArrayPair makeAlphaToIndex() {
-            ArrayPair temp;
+        static constexpr LUTPair makeAlphaToIndex() {
+            LUTPair temp;
             T counter = 1;
             for (size_t i = 0; i < order - 1; ++i) {
                 temp.indToPol[i] = BasicBinPolynomial<T, modPol>(counter).getVal();
@@ -311,11 +312,11 @@ namespace GFlinalg {
         }
 
         /*
-        Returns a pair of vectors (ArrayPair):
+        Returns a pair of vectors (LUTPair):
             indToPol: power of primitive element -> polynomial
             polToInd: polynomial -> power of primitive element
         */
-        static ArrayPair getAlphaToIndex() {
+        static LUTPair getAlphaToIndex() {
             return alphaToIndex;
         }
 
@@ -336,7 +337,7 @@ namespace GFlinalg {
             if (value == 0)
                 return PowBinPolynomial(0);
             if (other.value == 0)
-                throw std::runtime_error("Division by zero");
+                throw std::out_of_range("Division by zero");
             auto temp(alphaToIndex.polToInd[this->value]);
             if (temp < alphaToIndex.polToInd[other.value])
                 temp += order - 1;
@@ -361,7 +362,16 @@ namespace GFlinalg {
             *this = *this + other;
             return *this;
         }
+        template <class T1, T1 modPol1>
+        friend PowBinPolynomial<T1, modPol1> pow(const PowBinPolynomial<T1, modPol1>& val, size_t power);
     };
+    template <class T, T modPol>
+    PowBinPolynomial<T, modPol> pow(const PowBinPolynomial<T, modPol>& val, size_t power) {
+
+        return PowBinPolynomial<T, modPol>(
+            PowBinPolynomial<T, modPol>::alphaToIndex.indToPol[
+                (PowBinPolynomial<T, modPol>::alphaToIndex.polToInd[val.value] * power) % (val.gfOrder()-1)]);
+    }
 
     /*
     Table based GF element class. All math operations are done using multiplication table and division table
@@ -456,6 +466,7 @@ namespace GFlinalg {
             return TableBinPolynomial(mulTable[this->getVal()][other.getVal()], false);
         }
 
+
         TableBinPolynomial& operator *= (const TableBinPolynomial& other) {
             *this = *this * other;
             return *this;
@@ -463,7 +474,7 @@ namespace GFlinalg {
 
         TableBinPolynomial operator / (const TableBinPolynomial& other) const {
             if (other.value == 0)
-                throw std::runtime_error("Division by zero");
+                throw std::out_of_range("Division by zero");
             return TableBinPolynomial(divTable[this->getVal()][other.getVal()], false);
         }
 
@@ -474,9 +485,13 @@ namespace GFlinalg {
     };
 
 
+
     //
-    // Single parameter templated versions:
     //
+    // Single parameter templated versions
+    //
+    //
+
 
     template <class T>
     class BasicGFElem {
@@ -523,7 +538,7 @@ namespace GFlinalg {
         BasicGFElem polDiv(const BasicGFElem& a, const BasicGFElem& b) const {
             // Get b^-1: a / b = a * b^-1
             if (b.value == 0)
-                throw std::runtime_error("Division by zero");
+                throw std::out_of_range("Division by zero");
             auto invB = pow(b, a.order - 2);
             return polMul(a, invB);
         }
@@ -531,20 +546,38 @@ namespace GFlinalg {
 
     public:
         explicit constexpr BasicGFElem() : value(), modPol(), SZ(0), order(0) {}
-        explicit constexpr BasicGFElem(const T& value, const T& modulus) : value(value), modPol(modulus), SZ(modPolDegree()), order(1 << SZ) {
-            reduce();
+        explicit constexpr BasicGFElem(const T& value, const T& modulus, bool doReduce = true) : value(value), modPol(modulus), SZ(modPolDegree()), order(1 << SZ) {
+            if (doReduce) reduce();
         }
         template<typename Iter>
-        explicit constexpr BasicGFElem(Iter first, Iter last, const T& modulus) : value(0), modPol(modulus) {
+        explicit constexpr BasicGFElem(Iter first, Iter last, const T& modulus) : value(0), modPol(modulus), SZ(0), order(0) {
             while (first != last) {
                 value |= (static_cast<T>(*first) & 1);
                 value <<= 1;
             }
+            SZ = modPolDegree(); 
+            order = 1 << SZ;
             reduce();
         }
+
+        template<typename Iter>
+        explicit constexpr BasicGFElem(Iter first, Iter last, Iter firstMod, Iter lastMod): value(0), modPol(0), SZ(0), order(0) {
+            while (first != last) {
+                value |= (static_cast<T>(*first) & 1);
+                value <<= 1;
+            }
+            while (firstMod != lastMod) {
+                modPol |= (static_cast<T>(*firstMod) & 1);
+                modPol <<= 1;
+            }
+            SZ = modPolDegree();
+            order = 1 << SZ;
+            reduce();
+        }
+
         T getVal() const { return value; }
         T& val() { return value; }
-        size_t gfSize() const { return SZ; }
+        size_t gfDegree() const { return SZ; }
         size_t  gfOrder() const { return order; }
         T getMod() const { return modPol; }
 
@@ -569,15 +602,15 @@ namespace GFlinalg {
         }
 
         template <class T1>
-        operator T1() { return static_cast<T1>(value); }
+        explicit operator T1() { return static_cast<T1>(value); }
         size_t degree(size_t startPos = 1) {
-            return order - leadElemPos(value, startPos);  
+            return order - leadElemPos(value, startPos);
         }
 
-        BasicGFElem operator + (const BasicGFElem& other) const {
-            if (other.order != this->order)
+        friend BasicGFElem operator + (const BasicGFElem& a, const BasicGFElem& b) {
+            if (a.modPol != b.modPol)
                 throw std::runtime_error("Cannot perform addition for elements of different fields");
-            return this->polSum(*this, other);
+            return a.polSum(a, b);
         }
 
         BasicGFElem& operator += (const BasicGFElem& other) {
@@ -586,7 +619,7 @@ namespace GFlinalg {
         }
 
         BasicGFElem operator * (const BasicGFElem& other) const {
-            if (other.order != this->order)
+            if (other.modPol != this->modPol)
                 throw std::runtime_error("Cannot perform multiplication for elements of different fields");
             return this->polMul(*this, other);
         }
@@ -597,7 +630,7 @@ namespace GFlinalg {
         }
 
         BasicGFElem operator / (const BasicGFElem& other) const {
-            if (other.order != this->order)
+            if (other.modPol != this->modPol)
                 throw std::runtime_error("Cannot perform division for elements of different fields");
             return this->polDiv(*this, other);
         }
@@ -690,4 +723,61 @@ namespace GFlinalg {
             out << '0';
         return out;
     }
+
+    //template<class T>
+    //class PowGFElem: public BasicGFElem<T> {
+    //protected:
+    //    struct LUTPair {
+    //        std::vector<T> polToInd;
+    //        std::vector<T> indToPol;
+    //        LUTPair() : polToInd(), indToPol() {}
+    //        LUTPair(size_t length1, size_t length2) : polToInd(length1), indToPol(length2) {}
+    //
+    //    };
+    //    LUTPair* alphaToIndex;
+    //
+    //public:
+    //    using BasicGFElem<T>::BasicGFElem;
+    //    explicit PowGFElem(const BasicGFElem<T>& pol) : BasicGFElem<T>(pol) {}
+    //    PowGFElem operator * (const PowGFElem& other) const {
+    //        if (this->value == 0 || other.value == 0)
+    //            return PowGFElem(0);
+    //        return PowGFElem(indToPol[polToInd[this->value] + polToInd[other.value]], false);
+    //    }
+    //
+    //    PowGFElem& operator *= (const PowGFElem& other) {
+    //        this->val() = indToPol[polToInd[this->value] + polToInd[other.value]];
+    //        return *this;
+    //    }
+    //
+    //    PowGFElem operator / (const PowGFElem& other) const {
+    //        if (value == 0)
+    //            return PowGFElem(0);
+    //        if (other.value == 0)
+    //            throw std::out_of_range("Division by zero");
+    //        auto temp(polToInd[this->value]);
+    //        if (temp < polToInd[other.value])
+    //            temp += order - 1;
+    //        return PowGFElem(indToPol[polToInd[this->value] - polToInd[other.value]], false);
+    //    }
+    //
+    //    PowGFElem& operator /= (const PowGFElem& other) {
+    //        if (value == 0)
+    //            return PowGFElem(0);
+    //        auto temp(polToInd[this->value]);
+    //        if (temp < polToInd[other.value])
+    //            temp += order - 1;
+    //        *this->val = indToPol[polToInd[this->value] - polToInd[other.value]];
+    //        return *this;
+    //    }
+    //
+    //    PowGFElem operator + (const PowGFElem& other) const {
+    //        return PowGFElem(polSum(*this, other));
+    //    }
+    //
+    //    PowGFElem operator += (const PowGFElem& other) {
+    //        *this = *this + other;
+    //        return *this;
+    //    }
+    //};
 }
