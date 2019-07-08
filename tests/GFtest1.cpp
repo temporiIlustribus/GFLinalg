@@ -13,11 +13,11 @@ typedef GFlinalg::TableBinPolynomial<uint8_t, 11> tablePol;
 typedef GFlinalg::BasicGFElem<uint8_t> basicElem;
 // Comment this if you are having problems building project
 template<>
-powPol::ArrayPair powPol::alphaToIndex = powPol::makeAlphaToIndex();
+const powPol::ArrayPair powPol::alphaToIndex = powPol::makeAlphaToIndex();
 template<>
-tablePol::GFtable tablePol::mulTable = tablePol::makeMulTable();
+const tablePol::GFtable tablePol::mulTable = tablePol::makeMulTable();
 template<>
-tablePol::GFtable tablePol::divTable = tablePol::makeInvMulTable();
+const tablePol::GFtable tablePol::divTable = tablePol::makeInvMulTable();
 
 
 TEST_CASE("Basic arithmetic", "[BasicBinPolynomial]") {

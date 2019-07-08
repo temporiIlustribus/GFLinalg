@@ -28,7 +28,6 @@ namespace GFlinalg {
 
         T value;
         constexpr static size_t SZ = modPolDegree();
-        uint8_t deg;
         constexpr static size_t order = 1 << SZ;
 
         // Get the position of the leading 1 in the polynomial
@@ -84,9 +83,9 @@ namespace GFlinalg {
         }
 
     public:
-        explicit BasicBinPolynomial() : value(0), deg(0) {}
-        explicit BasicBinPolynomial(const T& val) : value(val), deg(0) {
-            reduce();
+        explicit BasicBinPolynomial() : value(0) {}
+        explicit BasicBinPolynomial(const T& val, bool doReduce = true) : value(val) {
+            if (doReduce) reduce();
         }
         /*
         Construct polynomial from a container (coefficients are passed in left to right)
@@ -94,7 +93,7 @@ namespace GFlinalg {
             Example 2: {1,1,1,0,0,1} -> x^5 + x^4 + x^3 + 1 (111001)
         */
         template<typename Iter>
-        explicit constexpr BasicBinPolynomial(Iter first, Iter last) : value(0), deg(0) {
+        explicit constexpr BasicBinPolynomial(Iter first, Iter last) : value(0) {
             while (first != last) {
                 value |= (static_cast<T>(*first) & 1);
                 value <<= 1;
@@ -116,15 +115,12 @@ namespace GFlinalg {
         static size_t gfSize() { return SZ; }
         // For GF(2^n) returns 2^n
         static size_t  gfOrder() { return order; }
-        // Returns the degree of the polynomial
-        size_t degree() const { return deg; }
         // Recalculates the degree of the polynomial
-        size_t updateDegree(size_t startPos = 1) {
-            deg = order - leadElemPos(value, startPos);
-            return  deg;
+        size_t degree(size_t startPos = 1) {
+            return order - leadElemPos(value, startPos);
         }
         // Reduces polynomial by modulus polynomial (modPol)
-        void reduce() {
+        T reduce() {
             auto pos = order - SZ;
             // Reduce by modulus
             uint8_t i = 1;
@@ -133,7 +129,7 @@ namespace GFlinalg {
                     value ^= modPol << (pos - i);
                 ++i;
             }
-            updateDegree();
+            return value;
         }
         /*
         Returns inverse of polynomial
@@ -155,7 +151,7 @@ namespace GFlinalg {
         }
 
         template <class T1>
-        T1 cast() { return static_cast<T1>(value); }
+        explicit operator T1() { return static_cast<T1>(value); }
 
         BasicBinPolynomial operator + (const BasicBinPolynomial& other) const {
             return this->polSum(*this, other);
@@ -245,7 +241,7 @@ namespace GFlinalg {
             }
             flag = true;
             pol.val() ^= (1 << pol.degree());
-            deg = pol.updateDegree(deg - 1);
+            deg = pol.degree(deg - 1);
             if (pol.val())
                 out << '+';
         }
@@ -290,7 +286,7 @@ namespace GFlinalg {
             ArrayPair(const std::array<T, (order - 1) * 2>& alph, const std::array<size_t, order>& ind) : indToPol(alph), polToInd(ind) {}
             ArrayPair(const std::pair<std::array<T, (order - 1) * 2>, std::array<size_t, order>>& val) : indToPol(val.first), polToInd(val.second) {}
         };
-        static ArrayPair alphaToIndex;
+        const static ArrayPair alphaToIndex;
     public:
         using BasicBinPolynomial<T, modPol>::BasicBinPolynomial;
         explicit PowBinPolynomial(const BasicBinPolynomial<T, modPol>& pol) : BasicBinPolynomial<T, modPol>(pol) {}
@@ -327,7 +323,7 @@ namespace GFlinalg {
             if (this->value == 0 || other.value == 0)
                 return PowBinPolynomial(0);
             return PowBinPolynomial(alphaToIndex.indToPol[alphaToIndex.polToInd[this->value] +
-                                    alphaToIndex.polToInd[other.value]]);
+                                    alphaToIndex.polToInd[other.value]], false);
         }
 
         PowBinPolynomial& operator *= (const PowBinPolynomial& other) {
@@ -344,7 +340,7 @@ namespace GFlinalg {
             auto temp(alphaToIndex.polToInd[this->value]);
             if (temp < alphaToIndex.polToInd[other.value])
                 temp += order - 1;
-            return PowBinPolynomial(alphaToIndex.indToPol[temp - alphaToIndex.polToInd[other.value]]);
+            return PowBinPolynomial(alphaToIndex.indToPol[temp - alphaToIndex.polToInd[other.value]], false);
         }
 
         PowBinPolynomial& operator /= (const PowBinPolynomial& other) {
@@ -448,7 +444,7 @@ namespace GFlinalg {
 
 
         TableBinPolynomial operator + (const TableBinPolynomial& other) const {
-            return TableBinPolynomial(polSum(*this, other));
+            return TableBinPolynomial(polSum(*this, other), false);
         }
 
         TableBinPolynomial& operator += (const TableBinPolynomial& other) {
@@ -457,7 +453,7 @@ namespace GFlinalg {
         }
 
         TableBinPolynomial operator * (const TableBinPolynomial& other) const {
-            return TableBinPolynomial(mulTable[this->getVal()][other.getVal()]);
+            return TableBinPolynomial(mulTable[this->getVal()][other.getVal()], false);
         }
 
         TableBinPolynomial& operator *= (const TableBinPolynomial& other) {
@@ -468,7 +464,7 @@ namespace GFlinalg {
         TableBinPolynomial operator / (const TableBinPolynomial& other) const {
             if (other.value == 0)
                 throw std::runtime_error("Division by zero");
-            return TableBinPolynomial(divTable[this->getVal()][other.getVal()]);
+            return TableBinPolynomial(divTable[this->getVal()][other.getVal()], false);
         }
 
         TableBinPolynomial& operator /= (const TableBinPolynomial& other) {
@@ -487,7 +483,6 @@ namespace GFlinalg {
     protected:
         T value;
         T modPol;
-        uint8_t deg;
         size_t SZ;
         size_t order;
         uint8_t modPolDegree() {
@@ -540,7 +535,7 @@ namespace GFlinalg {
             reduce();
         }
         template<typename Iter>
-        explicit constexpr BasicGFElem(Iter first, Iter last, const T& modulus) : value(0), modPol(modulus), deg(0) {
+        explicit constexpr BasicGFElem(Iter first, Iter last, const T& modulus) : value(0), modPol(modulus) {
             while (first != last) {
                 value |= (static_cast<T>(*first) & 1);
                 value <<= 1;
@@ -553,7 +548,7 @@ namespace GFlinalg {
         size_t  gfOrder() const { return order; }
         T getMod() const { return modPol; }
 
-        void reduce() {
+        T reduce() {
             auto pos = order - SZ;
             uint8_t i = 1;
             while (value >= 1U << SZ) {
@@ -561,7 +556,7 @@ namespace GFlinalg {
                     value ^= modPol << (pos - i);
                 ++i;
             }
-            updateDegree();
+            return value;
         }
 
         BasicGFElem getInverse() {
@@ -574,13 +569,9 @@ namespace GFlinalg {
         }
 
         template <class T1>
-        T1 cast() { return static_cast<T1>(value); }
-        size_t degree() {
-            return deg;
-        }
-        size_t updateDegree(size_t startPos = 1) {
-            deg = order - leadElemPos(value, startPos);
-            return  deg;
+        operator T1() { return static_cast<T1>(value); }
+        size_t degree(size_t startPos = 1) {
+            return order - leadElemPos(value, startPos);  
         }
 
         BasicGFElem operator + (const BasicGFElem& other) const {

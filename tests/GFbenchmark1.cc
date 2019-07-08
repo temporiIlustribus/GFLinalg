@@ -13,30 +13,30 @@ typedef GFlinalg::PowBinPolynomial<uint16_t, 19> powPol16;
 typedef GFlinalg::TableBinPolynomial<uint16_t, 19> tablePol16;
 
 
-typedef GFlinalg::BasicBinPolynomial<uint32_t, 19> basicPol32;
-typedef GFlinalg::PowBinPolynomial<uint32_t, 19> powPol32;
-typedef GFlinalg::TableBinPolynomial<uint32_t, 19> tablePol32;
+typedef GFlinalg::BasicBinPolynomial<uint32_t, 37> basicPol32;
+typedef GFlinalg::PowBinPolynomial<uint32_t, 37> powPol32;
+typedef GFlinalg::TableBinPolynomial<uint32_t, 37> tablePol32;
 // Comment this if you are having problems building project
-//template<>
-powPol8::ArrayPair powPol8::alphaToIndex = powPol8::makeAlphaToIndex();
-//template<>
-tablePol8::GFtable tablePol8::mulTable = tablePol8::makeMulTable();
-//template<>
-tablePol8::GFtable tablePol8::divTable = tablePol8::makeInvMulTable();
+template<>
+const powPol8::ArrayPair powPol8::alphaToIndex = powPol8::makeAlphaToIndex();
+template<>
+const tablePol8::GFtable tablePol8::mulTable = tablePol8::makeMulTable();
+template<>
+const tablePol8::GFtable tablePol8::divTable = tablePol8::makeInvMulTable();
 
-//template<>
-powPol16::ArrayPair powPol16::alphaToIndex = powPol16::makeAlphaToIndex();
-//template<>                                     
-tablePol16::GFtable tablePol16::mulTable = tablePol16::makeMulTable();
-//template<>                                     
-tablePol16::GFtable tablePol16::divTable = tablePol16::makeInvMulTable();
+template<>
+const powPol16::ArrayPair powPol16::alphaToIndex = powPol16::makeAlphaToIndex();
+template<>                                     
+const tablePol16::GFtable tablePol16::mulTable = tablePol16::makeMulTable();
+template<>                                     
+const tablePol16::GFtable tablePol16::divTable = tablePol16::makeInvMulTable();
 
-//template<>
-powPol32::ArrayPair powPol32::alphaToIndex = powPol32::makeAlphaToIndex();
-//template<>                                     
-tablePol32::GFtable tablePol32::mulTable = tablePol32::makeMulTable();
-//template<>                                     
-tablePol32::GFtable tablePol32::divTable = tablePol32::makeInvMulTable();
+template<>
+const powPol32::ArrayPair powPol32::alphaToIndex = powPol32::makeAlphaToIndex();
+template<>                                     
+const tablePol32::GFtable tablePol32::mulTable = tablePol32::makeMulTable();
+template<>                                     
+const tablePol32::GFtable tablePol32::divTable = tablePol32::makeInvMulTable();
 
 template <class Pol>
 static void BM_Reduction(benchmark::State& state) {
