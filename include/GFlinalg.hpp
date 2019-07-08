@@ -504,7 +504,7 @@ namespace GFlinalg {
         }
 
         BasicGFElem polMul(const BasicGFElem& a, const BasicGFElem& b) const {
-            BasicGFElem res(0,a.modPol);
+            BasicGFElem res(0, a.modPol);
             for (size_t i = 0; i < a.order; ++i) {
                 if ((b.value >> i) & 1) {
                     res.value ^= a.value << i;
@@ -682,7 +682,7 @@ namespace GFlinalg {
             }
             flag = true;
             pol.val() ^= (1 << pol.degree());
-            deg = pol.updateDegree(deg - 1);
+            deg = pol.degree(deg - 1);
             if (pol.val())
                 out << '+';
         }

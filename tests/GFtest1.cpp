@@ -322,7 +322,9 @@ TEST_CASE("Basic single template param arithmetic", "[BasicGFElem]") {
        REQUIRE(basicElem(42, 11) > basicElem(128, 11));
        REQUIRE(basicElem(176, 11) >= basicElem(0, 11));
        REQUIRE(basicElem(176, 11) <= basicElem(0, 11));
+       
    }
+   std::system("pause");
 }
 
 
