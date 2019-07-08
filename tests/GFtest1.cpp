@@ -6,9 +6,11 @@
 #include "catch.hpp"
 #include "GFlinalg.hpp"
 
-typedef GFlinalg::PowBinPolynomial<uint8_t, 11> powPol;
 typedef GFlinalg::BasicBinPolynomial<uint8_t, 11> basicPol;
+typedef GFlinalg::PowBinPolynomial<uint8_t, 11> powPol;
 typedef GFlinalg::TableBinPolynomial<uint8_t, 11> tablePol;
+//
+typedef GFlinalg::BasicGFElem<uint8_t> basicElem;
 // Comment this if you are having problems building project
 template<>
 powPol::ArrayPair powPol::alphaToIndex = powPol::makeAlphaToIndex();
@@ -16,6 +18,7 @@ template<>
 tablePol::GFtable tablePol::mulTable = tablePol::makeMulTable();
 template<>
 tablePol::GFtable tablePol::divTable = tablePol::makeInvMulTable();
+
 
 TEST_CASE("Basic arithmetic", "[BasicBinPolynomial]") {
     SECTION("Reduction") {
@@ -38,7 +41,7 @@ TEST_CASE("Basic arithmetic", "[BasicBinPolynomial]") {
         basicPol b(1);
         REQUIRE(a.getVal() == 1);
         REQUIRE(b.getVal() == 1);
-        REQUIRE((a+b).getVal() == 0);
+        REQUIRE((a + b).getVal() == 0);
         REQUIRE(basicPol(10) + basicPol(1) == basicPol(0));
         REQUIRE(basicPol(42) + basicPol(5) == basicPol(3));
         REQUIRE(basicPol(42) + basicPol(0) == basicPol(94));
@@ -156,7 +159,7 @@ TEST_CASE("Pow arithmetic", "[PowBinPolynomial]") {
         REQUIRE(GFlinalg::pow(powPol(3), 3) == powPol(4));
         REQUIRE(GFlinalg::pow(powPol(42), 7) == powPol(1));
         REQUIRE(GFlinalg::pow(powPol(42), 8) == powPol(42));
-        REQUIRE(powPol(42) * GFlinalg::pow(powPol(42), 6) == powPol(1));
+        REQUIRE(GFlinalg::pow(powPol(42), 6) * powPol(42) == powPol(1));
     }
     SECTION("Compare operators") {
         REQUIRE(powPol(42) > powPol(5));
@@ -234,7 +237,7 @@ TEST_CASE("Table arithmetic", "[TableBinPolynomial]") {
         REQUIRE(GFlinalg::pow(tablePol(3), 3) == tablePol(4));
         REQUIRE(GFlinalg::pow(tablePol(42), 7) == tablePol(1));
         REQUIRE(GFlinalg::pow(tablePol(42), 8) == tablePol(42));
-        REQUIRE(tablePol(42) * GFlinalg::pow(tablePol(42), 6) == tablePol(1));
+        REQUIRE(GFlinalg::pow(tablePol(42), 6) * tablePol(42) == tablePol(1));
     }
     SECTION("Compare operators") {
         REQUIRE(tablePol(42) > tablePol(5));
@@ -244,5 +247,83 @@ TEST_CASE("Table arithmetic", "[TableBinPolynomial]") {
         REQUIRE(tablePol(42) > tablePol(128));
         REQUIRE(tablePol(176) >= tablePol(0));
         REQUIRE(tablePol(176) <= tablePol(0));
-    }    
+    }
 }
+
+TEST_CASE("Basic single template param arithmetic", "[BasicGFElem]") {
+   SECTION("Reduction") {
+       REQUIRE(static_cast<size_t>(basicElem(10,11).getVal()) == 1);
+       REQUIRE(basicElem(11, 11).getVal() == 0);
+       REQUIRE(basicElem(1, 11).getVal() == 1);
+       REQUIRE(basicElem(42, 11).getVal() == 6);
+       REQUIRE(basicElem(9, 11).getVal() == 2);
+   }
+   SECTION("Data access") {
+       basicElem a(10, 11);
+       REQUIRE(a.getVal() == 1);
+       REQUIRE(basicElem(a).getVal() == 1);
+       REQUIRE(basicElem(a.getVal() + 2,11).getVal() == 3);
+       REQUIRE(a.gfSize() == 3);
+   }
+   SECTION("Addition") {
+       basicElem a(10, 11);
+       basicElem b(1, 11);
+       REQUIRE(a.getVal() == 1);
+       REQUIRE(b.getVal() == 1);
+       REQUIRE((a + b).getVal() == 0);
+       REQUIRE(basicElem(10, 11) + basicElem(1, 11) == basicElem(0, 11));
+       REQUIRE(basicElem(42, 11) + basicElem(5, 11) == basicElem(3, 11));
+       REQUIRE(basicElem(42, 11) + basicElem(0, 11) == basicElem(94, 11));
+       REQUIRE(basicElem(8, 11) + basicElem(3, 11) == basicElem(0, 11));
+       REQUIRE((a += basicElem(6, 11)) == basicElem(7, 11));
+       REQUIRE(a == basicElem(7, 11));
+       REQUIRE(a + basicElem(17, 11) == basicElem(0, 11));
+   }
+   SECTION("Multiplication") {
+       basicElem a(10, 11);
+       basicElem b(1, 11);
+       REQUIRE(a.getVal() == 1);
+       REQUIRE(b.getVal() == 1);
+       REQUIRE((a * b).getVal() == 1);
+       REQUIRE(basicElem(42, 11) * basicElem(42, 11) == basicElem(2, 11));
+       REQUIRE(basicElem(42, 11) * basicElem(0, 11) == basicElem(0, 11));
+       REQUIRE(basicElem(3, 11) * basicElem(3, 11) == basicElem(5, 11));
+       REQUIRE(basicElem(7, 11) * basicElem(4, 11) == basicElem(1, 11));
+       REQUIRE(basicElem(5, 11) * basicElem(3, 11) == basicElem(4, 11));
+       REQUIRE((a *= basicElem(40,11)) == basicElem(4,11));
+       REQUIRE(a.getVal() == 4);
+   }
+   SECTION("Division") {
+       basicElem a(10, 11);
+       basicElem b(1, 11);
+       REQUIRE(a.getVal() == 1);
+       REQUIRE(b.getVal() == 1);
+       REQUIRE((a / b).getVal() == 1);
+       REQUIRE((basicElem(2, 11) / basicElem(6, 11)).getVal() == 6);
+       REQUIRE((basicElem(6, 11) / basicElem(6, 11)).getVal() == 1);
+       REQUIRE((basicElem(10, 11) / basicElem(7, 11)).getVal() == 4);
+       REQUIRE((basicElem(10, 11) / basicElem(4, 11)).getVal() == 7);
+       REQUIRE((basicElem(4, 11) / basicElem(5, 11)).getVal() == 3);
+       REQUIRE((basicElem(4, 11) / basicElem(8, 11)).getVal() == 5);
+   }
+   SECTION("Galois Power") {
+       REQUIRE(GFlinalg::pow(basicElem(10, 11), 2) == basicElem(1, 11));
+       REQUIRE(GFlinalg::pow(basicElem(15, 11), 3) == basicElem(5, 11));
+       REQUIRE(GFlinalg::pow(basicElem(3, 11), 3) == basicElem(4, 11));
+       REQUIRE(GFlinalg::pow(basicElem(42, 11), 7) == basicElem(1, 11));
+       REQUIRE(GFlinalg::pow(basicElem(42, 11), 8) == basicElem(42, 11));
+       REQUIRE(basicElem(42,11) * GFlinalg::pow(basicElem(42,11), 6) == basicElem(1,11));
+   }
+   SECTION("Compare operators") {
+       REQUIRE(basicElem(42, 11) > basicElem(5, 11));
+       REQUIRE(basicElem(5, 11) > basicElem(4, 11));
+       REQUIRE(basicElem(10, 11) < basicElem(2, 11));
+       REQUIRE(basicElem(42, 11) < basicElem(17, 11));
+       REQUIRE(basicElem(42, 11) > basicElem(128, 11));
+       REQUIRE(basicElem(176, 11) >= basicElem(0, 11));
+       REQUIRE(basicElem(176, 11) <= basicElem(0, 11));
+   }
+}
+
+
+

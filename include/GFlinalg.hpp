@@ -2,6 +2,7 @@
 #include <iostream>
 #include <memory>
 #include <array>
+#include <any>
 
 namespace GFlinalg {
 
@@ -29,7 +30,7 @@ namespace GFlinalg {
         constexpr static size_t SZ = modPolDegree();
         uint8_t deg;
         constexpr static size_t order = 1 << SZ;
-    protected:
+
         // Get the position of the leading 1 in the polynomial
         static uint8_t leadElemPos(const T& pol, uint8_t startPos = 1) {
             uint8_t pos = 0;
@@ -60,20 +61,10 @@ namespace GFlinalg {
         // Internal division
         static BasicBinPolynomial polDiv(const BasicBinPolynomial& a, const BasicBinPolynomial& b) {
             // Get b^-1: a / b = a * b^-1
+            if (b.value == 0)
+                throw std::runtime_error("Division by zero");
             auto invB = pow(b, order - 2);
             return polMul(a, invB);
-        }
-
-        void reduce(const T& modulus) {
-            auto pos = leadElemPos(modulus);
-            // Reduce by modulus
-            uint8_t i = 1;
-            while (value >= 1U << (order - pos)) {
-                if ((value >> (order - i)) & 1)
-                    value ^= modulus << (pos - i);
-                ++i;
-            }
-            updateDegree();
         }
 
     public:
@@ -87,7 +78,7 @@ namespace GFlinalg {
             Example 2: {1,1,1,0,0,1} -> x^5 + x^4 + x^3 + 1 (111001)
         */
         template<typename Iter>
-        explicit BasicBinPolynomial(Iter first, Iter last) : value(0), deg(0) {
+        explicit constexpr BasicBinPolynomial(Iter first, Iter last) : value(0), deg(0) {
             while (first != last) {
                 value |= (static_cast<T>(*first) & 1);
                 value <<= 1;
@@ -116,7 +107,17 @@ namespace GFlinalg {
             return  deg;
         }
         // Reduces polynomial by modulus polynomial (modPol)
-        void reduce() { reduce(modPol); }
+        void reduce() {
+            auto pos = order - SZ;
+            // Reduce by modulus
+            uint8_t i = 1;
+            while (value >= 1U << SZ) {
+                if ((value >> (order - i)) & 1)
+                    value ^= modPol << (pos - i);
+                ++i;
+            }
+            updateDegree();
+        }
         /*
         Returns inverse of polynomial
             e.g. For polynomial "a" returns "a^(-1)" such that:
@@ -135,8 +136,9 @@ namespace GFlinalg {
             *this = pow(*this, order - 2);
             return *this;
         }
+
         template <class T1>
-        operator T1() { return static_cast<T1>(value); }
+        T1 cast() { return static_cast<T1>(value); }
 
         BasicBinPolynomial operator + (const BasicBinPolynomial& other) const {
             return this->polSum(*this, other);
@@ -320,6 +322,8 @@ namespace GFlinalg {
         PowBinPolynomial operator / (const PowBinPolynomial& other) const {
             if (value == 0)
                 return PowBinPolynomial(0);
+            if (other.value == 0)
+                throw std::runtime_error("Division by zero");
             auto temp(alphaToIndex.polToInd[this->value]);
             if (temp < alphaToIndex.polToInd[other.value])
                 temp += order - 1;
@@ -445,6 +449,8 @@ namespace GFlinalg {
         }
 
         TableBinPolynomial operator / (const TableBinPolynomial& other) const {
+            if (other.value == 0)
+                throw std::runtime_error("Division by zero");
             return TableBinPolynomial(divTable[this->getVal()][other.getVal()]);
         }
 
@@ -453,4 +459,227 @@ namespace GFlinalg {
             return *this;
         }
     };
+
+
+    //
+    // Single parameter templated versions:
+    //
+
+    template <class T>
+    class BasicGFElem {
+    protected:
+        T value;
+        T modPol;
+        uint8_t deg;
+        size_t SZ;
+        size_t order;
+        uint8_t modPolDegree() {
+            uint8_t pos = 0;
+            uint8_t containerSize = sizeof(T) << 3;
+            for (uint8_t i = 1; i < containerSize + 1; ++i) {
+                pos = containerSize - i;
+                if ((modPol >> pos) & 1) break;
+            }
+            return pos;
+        }
+        uint8_t leadElemPos(const T& pol, uint8_t startPos = 1) const {
+            uint8_t pos = 0;
+            for (uint8_t i = startPos; i < this->order + 1; ++i) {
+                pos = order - i;
+                if ((pol >> pos) & 1) break;
+            }
+            return order - pos;
+        }
+
+        BasicGFElem polMul(const BasicGFElem& a, const BasicGFElem& b) const {
+            BasicGFElem res(0,a.modPol);
+            for (size_t i = 0; i < a.order; ++i) {
+                if ((b.value >> i) & 1) {
+                    res.value ^= a.value << i;
+                }
+            }
+            res.reduce();
+            return res;
+        }
+
+        BasicGFElem polSum(const BasicGFElem& a, const BasicGFElem& b) const {
+            BasicGFElem res(a.value ^ b.value, a.modPol);
+            return res;
+        }
+
+
+        BasicGFElem polDiv(const BasicGFElem& a, const BasicGFElem& b) const {
+            // Get b^-1: a / b = a * b^-1
+            if (b.value == 0)
+                throw std::runtime_error("Division by zero");
+            auto invB = pow(b, a.order - 2);
+            return polMul(a, invB);
+        }
+
+
+    public:
+        explicit constexpr BasicGFElem() : value(), modPol(), SZ(0), order(0) {}
+        explicit constexpr BasicGFElem(const T& value, const T& modulus) : value(value), modPol(modulus), SZ(modPolDegree()), order(1 << SZ) {
+            reduce();
+        }
+        template<typename Iter>
+        explicit constexpr BasicGFElem(Iter first, Iter last, const T& modulus) : value(0), modPol(modulus), deg(0) {
+            while (first != last) {
+                value |= (static_cast<T>(*first) & 1);
+                value <<= 1;
+            }
+            reduce();
+        }
+        T getVal() const { return value; }
+        T& val() { return value; }
+        size_t gfSize() const { return SZ; }
+        size_t  gfOrder() const { return order; }
+        T getMod() const { return modPol; }
+
+        void reduce() {
+            auto pos = order - SZ;
+            uint8_t i = 1;
+            while (value >= 1U << SZ) {
+                if ((value >> (order - i)) & 1)
+                    value ^= modPol << (pos - i);
+                ++i;
+            }
+            updateDegree();
+        }
+
+        BasicGFElem getInverse() {
+            return pow(*this, order - 2);
+        }
+
+        BasicGFElem& invert() {
+            *this = pow(*this, order - 2);
+            return *this;
+        }
+
+        template <class T1>
+        T1 cast() { return static_cast<T1>(value); }
+        size_t degree() {
+            return deg;
+        }
+        size_t updateDegree(size_t startPos = 1) {
+            deg = order - leadElemPos(value, startPos);
+            return  deg;
+        }
+
+        BasicGFElem operator + (const BasicGFElem& other) const {
+            if (other.order != this->order)
+                throw std::runtime_error("Cannot perform addition for elements of different fields");
+            return this->polSum(*this, other);
+        }
+
+        BasicGFElem& operator += (const BasicGFElem& other) {
+            *this = this->polSum(*this, other);
+            return *this;
+        }
+
+        BasicGFElem operator * (const BasicGFElem& other) const {
+            if (other.order != this->order)
+                throw std::runtime_error("Cannot perform multiplication for elements of different fields");
+            return this->polMul(*this, other);
+        }
+
+        BasicGFElem& operator *= (const BasicGFElem& other) {
+            *this = this->polMul(*this, other);
+            return *this;
+        }
+
+        BasicGFElem operator / (const BasicGFElem& other) const {
+            if (other.order != this->order)
+                throw std::runtime_error("Cannot perform division for elements of different fields");
+            return this->polDiv(*this, other);
+        }
+
+        BasicGFElem& operator /= (const BasicGFElem& other) {
+            *this = this->polDiv(*this, other);
+            return *this;
+        }
+        template <class T1>
+        friend BasicGFElem<T1> pow(BasicGFElem<T1> val, size_t power);
+
+        template <class T1>
+        friend bool operator == (const BasicGFElem<T1>& lhs, const BasicGFElem<T1>& rhs);
+        template <class T1>
+        friend bool operator != (const BasicGFElem<T1>& lhs, const BasicGFElem<T1>& rhs);
+
+        template <class T1>
+        friend bool operator < (const BasicGFElem<T1>& lhs, const BasicGFElem<T1>& rhs);
+        template <class T1>
+        friend bool operator > (const BasicGFElem<T1>& lhs, const BasicGFElem<T1>& rhs);
+        template <class T1>
+        friend bool operator <= (const BasicGFElem<T1>& lhs, const BasicGFElem<T1>& rhs);
+        template <class T1>
+        friend bool operator >= (const BasicGFElem<T1>& lhs, const BasicGFElem<T1>& rhs);
+
+    };
+
+    template <class T>
+    bool operator < (const BasicGFElem<T>&  lhs, const BasicGFElem<T>& rhs) {
+        return lhs.value < rhs.value;
+    }
+
+    template <class T>
+    bool operator > (const BasicGFElem<T>& lhs, const BasicGFElem<T>& rhs) {
+        return lhs.value > rhs.value;
+    }
+    template <class T>
+    bool operator <= (const BasicGFElem<T>&  lhs, const BasicGFElem<T>& rhs) {
+        return lhs.value <= rhs.value;
+    }
+
+    template <class T>
+    bool operator >= (const BasicGFElem<T>&  lhs, const BasicGFElem<T>& rhs) {
+        return lhs.value >= rhs.value;
+    }
+    template <class T>
+    bool operator == (const BasicGFElem<T>&  lhs, const BasicGFElem<T>& rhs) {
+        return lhs.value == rhs.value;
+    }
+
+    template <class T>
+    bool operator != (const BasicGFElem<T>&  lhs, const BasicGFElem<T>& rhs) {
+        return lhs.value != rhs.value;
+    }
+
+    template <class T>
+    BasicGFElem<T> pow(BasicGFElem<T> val, size_t power) {
+        BasicGFElem<T> res{1, val.getMod()};
+        while (power) {
+            if (power & 1) {
+                res = res * val;
+                --power;
+            } else {
+                val *= val;
+                power >>= 1;
+            }
+        }
+        return res;
+    }
+
+    template <class T>
+    std::ostream& operator << (std::ostream& out, BasicGFElem<T> pol) {
+        size_t deg = pol.degree();
+        bool flag = false;
+        while (pol.getVal()) {
+            if (deg > 0) {
+                out << 'x';
+                if (deg > 1)
+                    out << '^' << deg;
+            } else {
+                out << '1';
+            }
+            flag = true;
+            pol.val() ^= (1 << pol.degree());
+            deg = pol.updateDegree(deg - 1);
+            if (pol.val())
+                out << '+';
+        }
+        if (!flag)
+            out << '0';
+        return out;
+    }
 }
