@@ -444,7 +444,7 @@ namespace GFlinalg {
 
 
         TableBinPolynomial operator + (const TableBinPolynomial& other) const {
-            return TableBinPolynomial(polSum(*this, other), false);
+            return TableBinPolynomial(polSum(*this, other));
         }
 
         TableBinPolynomial& operator += (const TableBinPolynomial& other) {
