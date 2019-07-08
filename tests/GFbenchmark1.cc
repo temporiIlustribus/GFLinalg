@@ -96,6 +96,21 @@ static void BM_Mul(benchmark::State& state) {
         );
     }
 }
+
+template <class Pol>
+static void BM_MulAlt(benchmark::State& state) {
+    Pol temp(0);
+    std::uniform_int_distribution<uint32_t> uid(1, Pol::gfOrder() - 1);
+    std::default_random_engine rd;
+    for (auto _ : state) {
+        Pol a(uid(rd));
+        Pol b(uid(rd));
+        Pol temp(a*b);
+        while (temp != a)
+            temp *= b;
+        benchmark::DoNotOptimize(temp);
+    }
+}
 BENCHMARK_TEMPLATE(BM_Mul, basicPol8);
 BENCHMARK_TEMPLATE(BM_Mul, powPol8);
 BENCHMARK_TEMPLATE(BM_Mul, tablePol8);
@@ -105,6 +120,10 @@ BENCHMARK_TEMPLATE(BM_Mul, tablePol16);
 BENCHMARK_TEMPLATE(BM_Mul, basicPol32);
 BENCHMARK_TEMPLATE(BM_Mul, powPol32);
 BENCHMARK_TEMPLATE(BM_Mul, tablePol32);
+
+BENCHMARK_TEMPLATE(BM_MulAlt, basicPol32);
+BENCHMARK_TEMPLATE(BM_MulAlt, powPol32);
+BENCHMARK_TEMPLATE(BM_MulAlt, tablePol32);
 
 template <class Pol>
 static void BM_Div(benchmark::State& state) {
