@@ -41,7 +41,7 @@ namespace GFlinalg {
             return order - pos;
         }
         // Internal multiplication version 1
-        static BasicBinPolynomial polMul(const BasicBinPolynomial& a, const BasicBinPolynomial& b) {
+        static BasicBinPolynomial polMulOld(const BasicBinPolynomial& a, const BasicBinPolynomial& b) {
             BasicBinPolynomial res(0);
             for (size_t i = 0; i < order; ++i) {
                 if ((b.value >> i) & 1) {
@@ -50,6 +50,22 @@ namespace GFlinalg {
             }
             res.reduce();
             return res;
+        }
+
+        static BasicBinPolynomial polMul(const BasicBinPolynomial &a, const BasicBinPolynomial &b)
+        {
+          BasicBinPolynomial res{};
+          auto av = a.value;
+          auto bv = b.value;
+          while (bv > 0) {
+            if (bv & 1)
+              res.val() ^= av;
+            bv >>= 1;
+            av <<= 1;
+            if (av & BasicBinPolynomial::gfOrder())
+              av ^= BasicBinPolynomial::modpol;
+          }
+          return res;
         }
 
         // Internal addition
@@ -95,6 +111,7 @@ namespace GFlinalg {
 
         */
         T& val() { return value; }
+        static constexpr T modpol = modPol;
         // For GF(2^n) returns n
         static size_t gfSize() { return SZ; }
         // For GF(2^n) returns 2^n
@@ -366,8 +383,8 @@ namespace GFlinalg {
         using BasicBinPolynomial<T, modPol>::BasicBinPolynomial;
         using GFtable = std::array<std::array<T, order>, order>;
     private:
-        static GFtable mulTable;
-        static GFtable divTable;
+        static const GFtable mulTable;
+        static const GFtable divTable;
     public:
 
         explicit TableBinPolynomial(const BasicBinPolynomial<T, modPol>& pol) : BasicBinPolynomial<T, modPol>(pol) {}
@@ -378,7 +395,7 @@ namespace GFlinalg {
             Table[pol1][pol2] = pol1 * pol2;
         */
         static constexpr GFtable makeMulTable() {
-            GFtable temp;
+            GFtable temp{0};
             // Note: requires checking whether we have traversed through all elements
             for (size_t i = 0; i < order; ++i) {
                 for (size_t j = i; j < order; ++j) {
@@ -400,7 +417,7 @@ namespace GFlinalg {
         Note: multiplication table is required to create this table
         */
         static constexpr GFtable makeInvMulTable() {
-            GFtable temp;
+            GFtable temp{0};
             for (size_t i = 0; i < order; ++i) {
                 for (size_t j = i; j < order; ++j) {
                     BasicBinPolynomial<T, modPol> a(i);
