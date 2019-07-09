@@ -9,12 +9,12 @@
 namespace GFlinalg {
 
     /*
-   Basic GF element class. All math operations are done directly in polynomial form
-       Operation complexity:
-       " + " - O(1)
-       " * " - O(n^2)
-       " / " - O(log^2(order) + n^2)
-   */
+    Basic GF element class. All math operations are done directly in polynomial form
+        Operation complexity:
+        " + " - O(1)
+        " * " - O(n^2)
+        " / " - O(log^2(order) + n^2)
+    */
     template <class T, T modPol>
     class  BasicBinPolynomial {
     protected:
@@ -46,13 +46,13 @@ namespace GFlinalg {
             BasicBinPolynomial res(0);
             for (size_t i = 0; i < order; ++i) {
                 if ((b.value >> i) & 1) {
-                    res.value ^= a.getVal() << i;
+                    res.value ^= a.val() << i;
                 }
             }
             res.reduce();
             return res;
         }
-
+        // Internal multiplication version 2
         static BasicBinPolynomial polMul(const BasicBinPolynomial &a, const BasicBinPolynomial &b) {
             BasicBinPolynomial res{};
             auto av = a.value;
@@ -88,6 +88,7 @@ namespace GFlinalg {
         explicit BasicBinPolynomial(const T& val, bool doReduce = true) : value(val) {
             if (doReduce) reduce();
         }
+        
         /*
         Construct polynomial from a container (coefficients are passed in left to right)
             Example 1: {1,0,1,0,0} -> x^4 + x^2 (10100)
@@ -103,7 +104,7 @@ namespace GFlinalg {
         }
 
         // Returns copy of the polynomial in the contained form
-        T getVal() const { return value; }
+        T val() const { return value; }
         /*
         Returns polynomial in the contained form
             Note: using this operator to alter contained value violates internal
@@ -111,12 +112,13 @@ namespace GFlinalg {
 
         */
         T& val() { return value; }
+        // Primitive modulus polynomial (modPol)
         static constexpr T modpol = modPol;
         // For GF(2^n) returns n
         static size_t gfDegree() { return SZ; }
         // For GF(2^n) returns 2^n
         static size_t  gfOrder() { return order; }
-        // Recalculates the degree of the polynomial
+        // Ñalculates the degree of the polynomial
         size_t degree(size_t startPos = 1) {
             return order - leadElemPos(value, startPos);
         }
@@ -153,6 +155,10 @@ namespace GFlinalg {
 
         template <class T1>
         explicit operator T1() { return static_cast<T1>(value); }
+
+        friend const T& operator + (const BasicBinPolynomial& a) {
+            return a.value;
+        }
 
         friend BasicBinPolynomial operator + (const BasicBinPolynomial& a, const BasicBinPolynomial& b) {
             return BasicBinPolynomial::polSum(a, b);
@@ -232,7 +238,7 @@ namespace GFlinalg {
     std::ostream& operator << (std::ostream& out, BasicBinPolynomial<T, modPol> pol) {
         size_t deg = pol.degree();
         bool flag = false;
-        while (pol.getVal()) {
+        while (pol.val()) {
             if (deg > 0) {
                 out << 'x';
                 if (deg > 1)
@@ -268,7 +274,7 @@ namespace GFlinalg {
 
 
     /*
-    GF element class; uses convertion to power of primitive element internaly
+    GF element class; uses convertion to power of primitive element Through a LUT internaly
         Operation complexity:
         " + " - O(1)
         " * " - O(1)
@@ -287,12 +293,27 @@ namespace GFlinalg {
             LUTPair(const std::array<T, (order - 1) * 2>& alph, const std::array<size_t, order>& ind) : indToPol(alph), polToInd(ind) {}
             LUTPair(const std::pair<std::array<T, (order - 1) * 2>, std::array<size_t, order>>& val) : indToPol(val.first), polToInd(val.second) {}
         };
+
         const static LUTPair alphaToIndex;
+
+        class FastMultContainer: public PowBinPolynomial<T, modPol>{
+        public:
+            size_t power;
+            FastMultContainer(const PowBinPolynomial<T, modPol>& pol): PowBinPolynomial<T,modPol>(pol) {
+                power = PowBinPolynomial<T, modPol>::alphaToIndex.polToInd[pol.val()];
+            }
+            FastMultContainer operator * (const FastMultContainer& other) {
+                return PowBinPolynomial<T, modPol>::alphaToIndex.indToPol[power + other.power];
+            }
+            FastMultContainer operator / (const FastMultContainer& other) {
+                return PowBinPolynomial<T, modPol>::alphaToIndex.indToPol[power - other.power];
+            }
+        };
     public:
         using BasicBinPolynomial<T, modPol>::BasicBinPolynomial;
         explicit PowBinPolynomial(const BasicBinPolynomial<T, modPol>& pol) : BasicBinPolynomial<T, modPol>(pol) {}
         /*
-        Creates a pair of vectors (LUTPair):
+        Creates a pair of look-up vectors (LUTPair):
             indToPol: power of primitive element -> polynomial
             polToInd: polynomial -> power of primitive element
         */
@@ -300,7 +321,7 @@ namespace GFlinalg {
             LUTPair temp;
             T counter = 1;
             for (size_t i = 0; i < order - 1; ++i) {
-                temp.indToPol[i] = BasicBinPolynomial<T, modPol>(counter).getVal();
+                temp.indToPol[i] = BasicBinPolynomial<T, modPol>(counter).val();
                 temp.polToInd[temp.indToPol[i]] = i;
                 counter <<= 1;
             }
@@ -312,7 +333,7 @@ namespace GFlinalg {
         }
 
         /*
-        Returns a pair of vectors (LUTPair):
+        Returns a pair of look-up vectors (LUTPair):
             indToPol: power of primitive element -> polynomial
             polToInd: polynomial -> power of primitive element
         */
@@ -320,9 +341,11 @@ namespace GFlinalg {
             return alphaToIndex;
         }
 
-        PowBinPolynomial operator * (const PowBinPolynomial& other) const {
+        FastMultContainer operator * (const PowBinPolynomial& other) const {
             if (this->value == 0 || other.value == 0)
                 return PowBinPolynomial(0);
+            // x * y = z
+            // Let a be the primitive element: x * y -> a^u * a^v = a^(u+v) -> z
             return PowBinPolynomial(alphaToIndex.indToPol[alphaToIndex.polToInd[this->value] +
                                     alphaToIndex.polToInd[other.value]], false);
         }
@@ -333,7 +356,7 @@ namespace GFlinalg {
             return *this;
         }
 
-        PowBinPolynomial operator / (const PowBinPolynomial& other) const {
+        FastMultContainer operator / (const PowBinPolynomial& other) const {
             if (value == 0)
                 return PowBinPolynomial(0);
             if (other.value == 0)
@@ -341,6 +364,8 @@ namespace GFlinalg {
             auto temp(alphaToIndex.polToInd[this->value]);
             if (temp < alphaToIndex.polToInd[other.value])
                 temp += order - 1;
+            // x / y = z
+            // Let a be the primitive element: x / y -> a^u / a^v = a^(u-v) -> z
             return PowBinPolynomial(alphaToIndex.indToPol[temp - alphaToIndex.polToInd[other.value]], false);
         }
 
@@ -370,7 +395,7 @@ namespace GFlinalg {
 
         return PowBinPolynomial<T, modPol>(
             PowBinPolynomial<T, modPol>::alphaToIndex.indToPol[
-                (PowBinPolynomial<T, modPol>::alphaToIndex.polToInd[val.value] * power) % (val.gfOrder()-1)]);
+                (PowBinPolynomial<T, modPol>::alphaToIndex.polToInd[val.value] * power) % (val.gfOrder() - 1)]);
     }
 
     /*
@@ -411,7 +436,6 @@ namespace GFlinalg {
                     temp[b.val()][a.val()] = temp[a.val()][b.val()];
                 }
             }
-            //mulTable = temp;
             return temp;
         }
 
@@ -432,7 +456,6 @@ namespace GFlinalg {
                     temp[mulTable[a.val()][b.val()]][b.val()] = a.val();
                 }
             }
-            //divTable = temp;
             return temp;
         }
         /*
@@ -445,7 +468,7 @@ namespace GFlinalg {
                 for (size_t j = 0; j < order; ++j) {
                     BasicBinPolynomial<T, modPol> a(i);
                     BasicBinPolynomial<T, modPol> b(j);
-                    temp[a.value][b.value] = (a / b).getVal();
+                    temp[a.value][b.value] = (a / b).val();
                 }
             }
             divTable = temp;
@@ -463,7 +486,7 @@ namespace GFlinalg {
         }
 
         TableBinPolynomial operator * (const TableBinPolynomial& other) const {
-            return TableBinPolynomial(mulTable[this->getVal()][other.getVal()], false);
+            return TableBinPolynomial(mulTable[this->val()][other.val()], false);
         }
 
 
@@ -475,7 +498,7 @@ namespace GFlinalg {
         TableBinPolynomial operator / (const TableBinPolynomial& other) const {
             if (other.value == 0)
                 throw std::out_of_range("Division by zero");
-            return TableBinPolynomial(divTable[this->getVal()][other.getVal()], false);
+            return TableBinPolynomial(divTable[this->val()][other.val()], false);
         }
 
         TableBinPolynomial& operator /= (const TableBinPolynomial& other) {
@@ -493,6 +516,14 @@ namespace GFlinalg {
     //
 
 
+   /*
+   Basic GF element class. All math operations are done directly in polynomial form
+       Operation complexity:
+       " + " - O(1)
+       " * " - O(n^2)
+       " / " - O(log^2(order) + n^2)
+       Note: primitive modulus polynomial is stored in individual instances
+   */
     template <class T>
     class BasicGFElem {
     protected:
@@ -500,6 +531,7 @@ namespace GFlinalg {
         T modPol;
         size_t SZ;
         size_t order;
+        // Returns the degree of the modulus polynomial
         uint8_t modPolDegree() {
             uint8_t pos = 0;
             uint8_t containerSize = sizeof(T) << 3;
@@ -509,6 +541,7 @@ namespace GFlinalg {
             }
             return pos;
         }
+        // Returns the position of the leading 1 in the polynomial from the left
         uint8_t leadElemPos(const T& pol, uint8_t startPos = 1) const {
             uint8_t pos = 0;
             for (uint8_t i = startPos; i < this->order + 1; ++i) {
@@ -517,24 +550,38 @@ namespace GFlinalg {
             }
             return order - pos;
         }
-
-        BasicGFElem polMul(const BasicGFElem& a, const BasicGFElem& b) const {
-            BasicGFElem res(0, a.modPol);
-            for (size_t i = 0; i < a.order; ++i) {
+        // Internal multiplication version 1
+        static BasicGFElem polMulOld(const BasicGFElem& a, const BasicGFElem& b) {
+            BasicGFElem res(0);
+            for (size_t i = 0; i < order; ++i) {
                 if ((b.value >> i) & 1) {
-                    res.value ^= a.value << i;
+                    res.value ^= a.val() << i;
                 }
             }
             res.reduce();
             return res;
         }
-
-        BasicGFElem polSum(const BasicGFElem& a, const BasicGFElem& b) const {
-            BasicGFElem res(a.value ^ b.value, a.modPol);
+        // Internal multiplication version 2 
+        static BasicGFElem polMul(const BasicGFElem &a, const BasicGFElem &b) {
+            BasicGFElem res{0,a.getMod()};
+            auto av = a.value;
+            auto bv = b.value;
+            while (bv > 0) {
+                if (bv & 1)
+                    res.val() ^= av;
+                bv >>= 1;
+                av <<= 1;
+                if (av & a.gfOrder())
+                    av ^= a.getMod();
+            }
             return res;
         }
+        // Internal addition
+        BasicGFElem polSum(const BasicGFElem& a, const BasicGFElem& b) const {
+            return BasicGFElem(a.value ^ b.value, a.modPol);
+        }
 
-
+        // Internal Division
         BasicGFElem polDiv(const BasicGFElem& a, const BasicGFElem& b) const {
             // Get b^-1: a / b = a * b^-1
             if (b.value == 0)
@@ -555,13 +602,13 @@ namespace GFlinalg {
                 value |= (static_cast<T>(*first) & 1);
                 value <<= 1;
             }
-            SZ = modPolDegree(); 
+            SZ = modPolDegree();
             order = 1 << SZ;
             reduce();
         }
 
         template<typename Iter>
-        explicit constexpr BasicGFElem(Iter first, Iter last, Iter firstMod, Iter lastMod): value(0), modPol(0), SZ(0), order(0) {
+        explicit constexpr BasicGFElem(Iter first, Iter last, Iter firstMod, Iter lastMod) : value(0), modPol(0), SZ(0), order(0) {
             while (first != last) {
                 value |= (static_cast<T>(*first) & 1);
                 value <<= 1;
@@ -574,13 +621,22 @@ namespace GFlinalg {
             order = 1 << SZ;
             reduce();
         }
+        // Returns copy of the polynomial in the contained form
+        T val() const { return value; }
+        /*
+        Returns polynomial in the contained form
+            Note: using this operator to alter contained value violates internal
+                  invariant. To resolve, use "reduce()" method.
 
-        T getVal() const { return value; }
+        */
         T& val() { return value; }
+        // For GF(2^n) returns n
         size_t gfDegree() const { return SZ; }
+        // For GF(2^n) returns 2^n
         size_t  gfOrder() const { return order; }
+        // Returns the primitive modulus polynomial (modPol) 
         T getMod() const { return modPol; }
-
+        // Reduces the element by modulus polynomial (modPol)
         T reduce() {
             auto pos = order - SZ;
             uint8_t i = 1;
@@ -591,11 +647,20 @@ namespace GFlinalg {
             }
             return value;
         }
-
+        /*
+        Returns inverse of polynomial
+           e.g. For polynomial "a" returns "a^(-1)" such that:
+           a * a^(-1) == a^(-1) * a == 1
+        */
         BasicGFElem getInverse() {
             return pow(*this, order - 2);
         }
-
+        /*
+        Inverts polynomial
+           e.g. For polynomial "a" calculates a^(-1) such that:
+           a * a^(-1) == a^(-1) * a == 1
+           and sets a = a^(-1)
+       */
         BasicGFElem& invert() {
             *this = pow(*this, order - 2);
             return *this;
@@ -603,7 +668,9 @@ namespace GFlinalg {
 
         template <class T1>
         explicit operator T1() { return static_cast<T1>(value); }
-        size_t degree(size_t startPos = 1) {
+
+        // Calculates the degree of the polynomial
+        size_t degree(size_t startPos = 1) const {
             return order - leadElemPos(value, startPos);
         }
 
@@ -618,10 +685,10 @@ namespace GFlinalg {
             return *this;
         }
 
-        BasicGFElem operator * (const BasicGFElem& other) const {
-            if (other.modPol != this->modPol)
+        friend BasicGFElem operator * (const BasicGFElem& a, const BasicGFElem& b) {
+            if (a.modPol != b.modPol)
                 throw std::runtime_error("Cannot perform multiplication for elements of different fields");
-            return this->polMul(*this, other);
+            return a.polMul(a, b);
         }
 
         BasicGFElem& operator *= (const BasicGFElem& other) {
@@ -629,16 +696,17 @@ namespace GFlinalg {
             return *this;
         }
 
-        BasicGFElem operator / (const BasicGFElem& other) const {
-            if (other.modPol != this->modPol)
+        friend BasicGFElem operator / (const BasicGFElem& a, const BasicGFElem& b) {
+            if (a.modPol != b.modPol)
                 throw std::runtime_error("Cannot perform division for elements of different fields");
-            return this->polDiv(*this, other);
+            return a.polDiv(a, b);
         }
 
         BasicGFElem& operator /= (const BasicGFElem& other) {
             *this = this->polDiv(*this, other);
             return *this;
         }
+
         template <class T1>
         friend BasicGFElem<T1> pow(BasicGFElem<T1> val, size_t power);
 
@@ -660,30 +728,38 @@ namespace GFlinalg {
 
     template <class T>
     bool operator < (const BasicGFElem<T>&  lhs, const BasicGFElem<T>& rhs) {
-        return lhs.value < rhs.value;
+        if (lhs.modPol != rhs.modPol)
+            throw std::runtime_error("Cannot compare elements of different fields");
+        return (lhs.value < rhs.value);
     }
 
     template <class T>
     bool operator > (const BasicGFElem<T>& lhs, const BasicGFElem<T>& rhs) {
-        return lhs.value > rhs.value;
+        if (lhs.modPol != rhs.modPol)
+            throw std::runtime_error("Cannot compare elements of different fields");
+        return (lhs.value > rhs.value);
     }
     template <class T>
     bool operator <= (const BasicGFElem<T>&  lhs, const BasicGFElem<T>& rhs) {
+        if (lhs.modPol != rhs.modPol)
+            throw std::runtime_error("Cannot compare elements of different fields");
         return lhs.value <= rhs.value;
     }
 
     template <class T>
     bool operator >= (const BasicGFElem<T>&  lhs, const BasicGFElem<T>& rhs) {
+        if (lhs.modPol != rhs.modPol)
+            throw std::runtime_error("Cannot compare elements of different fields");
         return lhs.value >= rhs.value;
     }
     template <class T>
     bool operator == (const BasicGFElem<T>&  lhs, const BasicGFElem<T>& rhs) {
-        return lhs.value == rhs.value;
+        return (lhs.value == rhs.value) && (lhs.modPol == rhs.modPol);
     }
 
     template <class T>
     bool operator != (const BasicGFElem<T>&  lhs, const BasicGFElem<T>& rhs) {
-        return lhs.value != rhs.value;
+        return (lhs.value != rhs.value) || (lhs.modPol != rhs.modPol);
     }
 
     template <class T>
@@ -705,7 +781,7 @@ namespace GFlinalg {
     std::ostream& operator << (std::ostream& out, BasicGFElem<T> pol) {
         size_t deg = pol.degree();
         bool flag = false;
-        while (pol.getVal()) {
+        while (pol.val()) {
             if (deg > 0) {
                 out << 'x';
                 if (deg > 1)
@@ -723,61 +799,136 @@ namespace GFlinalg {
             out << '0';
         return out;
     }
+    
 
-    //template<class T>
-    //class PowGFElem: public BasicGFElem<T> {
-    //protected:
-    //    struct LUTPair {
-    //        std::vector<T> polToInd;
-    //        std::vector<T> indToPol;
-    //        LUTPair() : polToInd(), indToPol() {}
-    //        LUTPair(size_t length1, size_t length2) : polToInd(length1), indToPol(length2) {}
-    //
-    //    };
-    //    LUTPair* alphaToIndex;
-    //
-    //public:
-    //    using BasicGFElem<T>::BasicGFElem;
-    //    explicit PowGFElem(const BasicGFElem<T>& pol) : BasicGFElem<T>(pol) {}
-    //    PowGFElem operator * (const PowGFElem& other) const {
-    //        if (this->value == 0 || other.value == 0)
-    //            return PowGFElem(0);
-    //        return PowGFElem(indToPol[polToInd[this->value] + polToInd[other.value]], false);
-    //    }
-    //
-    //    PowGFElem& operator *= (const PowGFElem& other) {
-    //        this->val() = indToPol[polToInd[this->value] + polToInd[other.value]];
-    //        return *this;
-    //    }
-    //
-    //    PowGFElem operator / (const PowGFElem& other) const {
-    //        if (value == 0)
-    //            return PowGFElem(0);
-    //        if (other.value == 0)
-    //            throw std::out_of_range("Division by zero");
-    //        auto temp(polToInd[this->value]);
-    //        if (temp < polToInd[other.value])
-    //            temp += order - 1;
-    //        return PowGFElem(indToPol[polToInd[this->value] - polToInd[other.value]], false);
-    //    }
-    //
-    //    PowGFElem& operator /= (const PowGFElem& other) {
-    //        if (value == 0)
-    //            return PowGFElem(0);
-    //        auto temp(polToInd[this->value]);
-    //        if (temp < polToInd[other.value])
-    //            temp += order - 1;
-    //        *this->val = indToPol[polToInd[this->value] - polToInd[other.value]];
-    //        return *this;
-    //    }
-    //
-    //    PowGFElem operator + (const PowGFElem& other) const {
-    //        return PowGFElem(polSum(*this, other));
-    //    }
-    //
-    //    PowGFElem operator += (const PowGFElem& other) {
-    //        *this = *this + other;
-    //        return *this;
-    //    }
-    //};
+    /*
+    GF element class; uses convertion to power of primitive element through a LUT internaly
+       Operation complexity:
+       " + " - O(1)
+       " * " - O(1)
+       " / " - O(1)
+       Note 1: primitive modulus polynomial is stored in individual instances
+       Note 2: uses a LUTPair pointer internally; To make the LUTPair use LUTPair<T>::makeLUT(params...)
+               the LUT is generated for the specific field; use LUT-s with propper parameters.
+   */
+    template<class T>
+    class PowGFElem : public BasicGFElem<T> {
+    public:
+        struct LUTPair {
+            std::vector<T> indToPol;
+            std::vector<T> polToInd;
+            LUTPair() : polToInd(), indToPol() {}
+            LUTPair(size_t length1, size_t length2) :indToPol(length1), polToInd(length2) {}
+            LUTPair(size_t length) :indToPol(length << 1), polToInd(length) {}
+            LUTPair(const LUTPair&& lut) : polToInd(std::move(lut.polToInd)),
+                indToPol(std::move(lut.indToPol)) {
+            }
+            /*
+            Creates a two-way look-up table for a specified field
+            Returns a pointer to generated LUTPair
+                indToPol: power of primitive element -> polynomial
+                polToInd: polynomial -> power of primitive element
+            */
+            static LUTPair* makeLUT(size_t order, const T& modPol) {
+                LUTPair* temp = new LUTPair(order - 1);
+                T counter = 1;
+                for (size_t i = 0; i < order - 1; ++i) {
+                    temp->indToPol[i] = BasicGFElem(counter, modPol).val();
+                    temp->polToInd[temp->indToPol[i]] = i;
+                    counter <<= 1;
+                }
+                // This is to avoid % operations in math operators
+                for (size_t i = order - 1; i < temp->indToPol.size(); ++i) {
+                    temp->indToPol[i] = temp->indToPol[i - order + 1];
+                }
+                return temp;
+            }
+
+        };
+    protected:
+        using BasicGFElem<T>::polSum;
+        using BasicGFElem<T>::value;
+        using BasicGFElem<T>::modPol;
+        
+        LUTPair* alphaToIndex = nullptr;
+
+    public:
+        using BasicGFElem<T>::BasicGFElem;
+        explicit PowGFElem(const BasicGFElem<T>& pol) : BasicGFElem<T>(pol) {}
+        explicit PowGFElem(const T& val, const T& modPol, LUTPair* lut) : BasicGFElem<T>(val, modPol) {
+            alphaToIndex = lut;
+        }
+        explicit PowGFElem(const BasicGFElem<T>& pol, LUTPair* lut) : BasicGFElem<T>(pol) {
+            alphaToIndex = lut;
+        }
+        // Access the internal look-up table
+        LUTPair* lut() const {
+            return alphaToIndex;
+        }
+        // Access the internall look-up table
+        LUTPair* lut() {
+            return alphaToIndex;
+        }
+
+        PowGFElem operator * (const PowGFElem& other) const {
+            if (other.modPol != this->modPol)
+                throw std::runtime_error("Cannot perform multiplication for elements of different fields");
+            if (this->value == 0 || other.value == 0)
+                return PowGFElem(0, modPol);
+            // x * y = z
+            // Let a be the primitive element: x * y -> a^u * a^v = a^(u+v) -> z
+            return PowGFElem(alphaToIndex->indToPol[alphaToIndex->polToInd[this->value] +
+                             alphaToIndex->polToInd[other.value]], modPol, false);
+        }
+
+        PowGFElem& operator *= (const PowGFElem& other) {
+            this->val() = alphaToIndex->indToPol[alphaToIndex->polToInd[this->value] +
+                alphaToIndex->polToInd[other.value]];
+            return *this;
+        }
+
+        PowGFElem operator / (const PowGFElem& other) const {
+            if (other.modPol != this->modPol)
+                throw std::runtime_error("Cannot perform division for elements of different fields");
+            if (value == 0)
+                return PowGFElem(0, modPol);
+            if (other.value == 0)
+                throw std::out_of_range("Division by zero");
+            auto temp = alphaToIndex->polToInd[this->value];
+            if (temp < alphaToIndex->polToInd[other.value])
+                temp += order - 1;
+            // x / y = z
+            // Let a be the primitive element: x / y -> a^u / a^v = a^(u-v) -> z
+            return PowGFElem(alphaToIndex->indToPol[temp - alphaToIndex->polToInd[other.value]], modPol, alphaToIndex);
+        }
+
+        PowGFElem& operator /= (const PowGFElem& other) {
+            if (value == 0)
+                return PowGFElem(0);
+            auto temp(polToInd[this->value]);
+            if (temp < polToInd[other.value])
+                temp += order - 1;
+            *this->val = alphaToIndex->indToPol[temp - alphaToIndex->polToInd[other.value]];
+            return *this;
+        }
+
+        PowGFElem operator + (const PowGFElem& other) const {
+            if (other.modPol != this->modPol)
+                throw std::runtime_error("Cannot perform addition for elements of different fields");
+            return  PowGFElem(polSum(*this, other), alphaToIndex);
+        }
+
+        PowGFElem operator += (const PowGFElem& other) {
+            *this = *this + other;
+            return *this;
+        }
+        template <class T1>
+        friend PowGFElem<T1> pow(const PowGFElem<T1>& val, size_t power);
+    };
+    template<class T>
+    PowGFElem<T> pow(const PowGFElem<T>& val, size_t power) {
+        return PowGFElem<T>(
+            val.alphaToIndex->indToPol[
+                (val.alphaToIndex->polToInd[val.value] * power) % (val.gfOrder() - 1)], val.modPol, val.alphaToIndex);
+    }
 }
