@@ -848,10 +848,11 @@ namespace GFlinalg {
     protected:
         using BasicGFElem<T>::polSum;
         using BasicGFElem<T>::value;
+        using BasicGFElem<T>::order;
         using BasicGFElem<T>::modPol;
         
         LUTPair* alphaToIndex = nullptr;
-
+        
     public:
         using BasicGFElem<T>::BasicGFElem;
         explicit PowGFElem(const BasicGFElem<T>& pol) : BasicGFElem<T>(pol) {}
@@ -905,8 +906,8 @@ namespace GFlinalg {
         PowGFElem& operator /= (const PowGFElem& other) {
             if (value == 0)
                 return PowGFElem(0);
-            auto temp(polToInd[this->value]);
-            if (temp < polToInd[other.value])
+            auto temp(alphaToIndex->polToInd[this->value]);
+            if (temp < alphaToIndex->polToInd[other.value])
                 temp += order - 1;
             *this->val = alphaToIndex->indToPol[temp - alphaToIndex->polToInd[other.value]];
             return *this;
