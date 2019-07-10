@@ -440,7 +440,7 @@ namespace GFlinalg {
                 throw std::out_of_range("Cannot divide by zero");
             auto temp = power;
             if (power < other.power)
-                temp += powBinPolynomial.gfOrder() - 1;
+                temp += PowBinPolynomial<T, modPol>::gfOrder() - 1;
             return power - other.power;
         }
     };
@@ -1088,7 +1088,7 @@ namespace GFlinalg {
         TableGFElem operator + (const TableGFElem& other) const {
             if (other.modPol != this->modPol)
                 throw std::runtime_error("Cannot perform addition for elements of different fields");
-            return TableGFElem(polSum(*this, other));
+            return TableGFElem(polSum(*this, other), modPol, mulTable, divTable);
         }
 
         TableGFElem& operator += (const TableGFElem& other) {
