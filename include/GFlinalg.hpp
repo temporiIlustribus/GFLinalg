@@ -551,11 +551,11 @@ namespace GFlinalg {
             return order - pos;
         }
         // Internal multiplication version 1
-        static BasicGFElem polMulOld(const BasicGFElem& a, const BasicGFElem& b) {
-            BasicGFElem res(0);
-            for (size_t i = 0; i < order; ++i) {
+        BasicGFElem polMulOld(const BasicGFElem& a, const BasicGFElem& b) const {
+            BasicGFElem res(0, a.modPol);
+            for (size_t i = 0; i < a.order; ++i) {
                 if ((b.value >> i) & 1) {
-                    res.value ^= a.val() << i;
+                    res.value ^= a.value << i;
                 }
             }
             res.reduce();
