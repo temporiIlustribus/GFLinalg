@@ -356,10 +356,11 @@ namespace GFlinalg {
             return FastMultContainer<T, modPol>(alphaToIndex.polToInd[this->value] + alphaToIndex.polToInd[other.value]);
         }
 
-        PowBinPolynomial& operator *= (const PowBinPolynomial& other) {
+        
+        FastMultContainer<T, modPol>& operator *= (const PowBinPolynomial& other) {
             this->val() = alphaToIndex.indToPol[alphaToIndex.polToInd[this->value] +
                 alphaToIndex.polToInd[other.value]];
-            return *this;
+            return FastMultContainer<T, modPol>(*this);
         }
 
         FastMultContainer<T, modPol> operator / (const PowBinPolynomial& other) const {
@@ -433,7 +434,11 @@ namespace GFlinalg {
                 return FastMultContainer(0, true);
             return power + other.power;
         }
-        FastMultContainer operator / (const FastMultContainer& other) {
+       FastMultContainer& operator *= (const FastMultContainer& other) {
+           *this = *this * other;
+           return *this;
+       }
+       FastMultContainer operator / (const FastMultContainer& other) {
             if (isZero)
                 return  FastMultContainer(0, true);
             if (other.isZero)
@@ -442,6 +447,10 @@ namespace GFlinalg {
             if (power < other.power)
                 temp += PowBinPolynomial<T, modPol>::gfOrder() - 1;
             return power - other.power;
+        }
+        FastMultContainer& operator /= (const FastMultContainer& other) {
+            *this = *this / other;
+            return *this;
         }
     };
     /*

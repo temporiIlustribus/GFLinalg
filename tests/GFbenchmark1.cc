@@ -105,9 +105,10 @@ static void BM_MulAlt(benchmark::State& state) {
     for (auto _ : state) {
         Pol a(uid(rd));
         Pol b(uid(rd));
-        Pol temp(a*b);
-        while (temp != a)
+        Pol temp = a * b;
+        while (temp != a) {
             temp *= b;
+        }
         benchmark::DoNotOptimize(temp);
     }
 }
