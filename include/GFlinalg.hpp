@@ -357,10 +357,10 @@ namespace GFlinalg {
         }
 
         
-        FastMultContainer<T, modPol>& operator *= (const PowBinPolynomial& other) {
+        PowBinPolynomial& operator *= (const PowBinPolynomial& other) {
             this->val() = alphaToIndex.indToPol[alphaToIndex.polToInd[this->value] +
                 alphaToIndex.polToInd[other.value]];
-            return FastMultContainer<T, modPol>(*this);
+            return (*this);
         }
 
         FastMultContainer<T, modPol> operator / (const PowBinPolynomial& other) const {
