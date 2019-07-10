@@ -833,7 +833,7 @@ namespace GFlinalg {
                 LUTPair* temp = new LUTPair(order - 1);
                 T counter = 1;
                 for (size_t i = 0; i < order - 1; ++i) {
-                    temp->indToPol[i] = BasicGFElem(counter, modPol).val();
+                    temp->indToPol[i] = BasicGFElem<T>{counter, modPol}.val();
                     temp->polToInd[temp->indToPol[i]] = i;
                     counter <<= 1;
                 }
