@@ -1088,7 +1088,7 @@ namespace GFlinalg {
         TableGFElem operator + (const TableGFElem& other) const {
             if (other.modPol != this->modPol)
                 throw std::runtime_error("Cannot perform addition for elements of different fields");
-            return TableGFElem(polSum(*this, other), modPol, mulTable, divTable);
+            return TableGFElem(polSum(*this, other), mulTable, divTable);
         }
 
         TableGFElem& operator += (const TableGFElem& other) {
