@@ -105,7 +105,7 @@ static void BM_MulAlt(benchmark::State& state) {
     for (auto _ : state) {
         Pol a(uid(rd));
         Pol b(uid(rd));
-        Pol temp = a * b;
+        auto temp(a * b);
         while (temp != a) {
             temp *= b;
         }

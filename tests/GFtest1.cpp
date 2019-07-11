@@ -22,7 +22,7 @@ template<>
 const tablePol::GFtable tablePol::divTable = tablePol::makeInvMulTable();
 //
 std::shared_ptr<powElem::LUTPair> LUT(powElem::makeLUT(8, 11));
-#define lut1 LUT.get()
+auto const* lut1 = LUT.get();
 
 std::shared_ptr<tableElem::GFtable> MulTable(tableElem::makeMulTable(8, 11));
 #define mul  MulTable.get()
@@ -30,6 +30,15 @@ std::shared_ptr<tableElem::GFtable> DivTable(tableElem::makeInvMulTable(mul, 11)
 #define div DivTable.get()
 
 TEMPLATE_TEST_CASE("Basic arithmetic", "[template]", basicPol, powPol, tablePol) {
+    SECTION("Multiplication chaining") {
+        powPol a(3);
+        powPol b(5);
+        auto res{a*b};
+        while (res != a) {
+            res *= b;
+            REQUIRE(res.power < powPol::gfOrder());
+        }
+    }
     SECTION("Reduction") {
         REQUIRE(TestType(10).val() == 1);
         REQUIRE(TestType(11).val() == 0);
