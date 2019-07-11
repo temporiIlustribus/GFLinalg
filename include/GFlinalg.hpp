@@ -338,7 +338,7 @@ namespace GFlinalg {
             for (size_t i = 0; i < order - 1; ++i) {
                 temp.indToPol[i] = counter.val();
                 temp.polToInd[temp.indToPol[i]] = i;
-                counter *= BasicBinPolynomial<T, modpol>(2);
+                counter *= BasicBinPolynomial<T, modPol>(2);
             }
             // This is to avoid % operations in math operators
             for (size_t i = order - 1; i < temp.indToPol.size(); ++i)
