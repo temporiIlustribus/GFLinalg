@@ -334,7 +334,7 @@ namespace GFlinalg {
         */
         static constexpr LUTPair makeAlphaToIndex() {
             LUTPair temp;
-            BasicBinPolynomial<T, modpol> counter{1};
+            BasicBinPolynomial<T, modPol> counter{1};
             for (size_t i = 0; i < order - 1; ++i) {
                 temp.indToPol[i] = counter.val();
                 temp.polToInd[temp.indToPol[i]] = i;
