@@ -15,30 +15,22 @@ typedef GFlinalg::PowGFElem<uint8_t> powElem;
 typedef GFlinalg::TableGFElem<uint8_t> tableElem;
 // Comment this if you are having problems building project
 template<>
-const powPol::LUTPair powPol::alphaToIndex = powPol::makeAlphaToIndex();
+const GFlinalg::LUTArrPair<uint8_t,11> powPol::alphaToIndex{};
 template<>
 const tablePol::GFtable tablePol::mulTable = tablePol::makeMulTable();
 template<>
 const tablePol::GFtable tablePol::divTable = tablePol::makeInvMulTable();
 //
-std::shared_ptr<powElem::LUTPair> LUT(powElem::makeLUT(8, 11));
-auto const* lut1 = LUT.get();
+GFlinalg::LUTVectPair<uint8_t> LUT{11};
+std::shared_ptr<GFlinalg::LUTVectPair<uint8_t>> LUTptr(&LUT);
+auto const* lut1 = LUTptr.get();
 
 std::shared_ptr<tableElem::GFtable> MulTable(tableElem::makeMulTable(8, 11));
-#define mul  MulTable.get()
+tableElem::GFtable const* mul = MulTable.get();
 std::shared_ptr<tableElem::GFtable> DivTable(tableElem::makeInvMulTable(mul, 11));
-#define div DivTable.get()
+tableElem::GFtable const* div1 = DivTable.get();
 
 TEMPLATE_TEST_CASE("Basic arithmetic", "[template]", basicPol, powPol, tablePol) {
-    SECTION("Multiplication chaining") {
-        powPol a(3);
-        powPol b(5);
-        auto res{a*b};
-        while (res != a) {
-            res *= b;
-            REQUIRE(res.power < powPol::gfOrder());
-        }
-    }
     SECTION("Reduction") {
         REQUIRE(TestType(10).val() == 1);
         REQUIRE(TestType(11).val() == 0);
@@ -83,6 +75,15 @@ TEMPLATE_TEST_CASE("Basic arithmetic", "[template]", basicPol, powPol, tablePol)
         REQUIRE(TestType(5) * TestType(3) == TestType(4));
         REQUIRE((a *= TestType(40)) == TestType(4));
         REQUIRE(a.val() == 4);
+    }
+    SECTION("Multiplication chaining") {
+        TestType a(3);
+        TestType b(5);
+        auto res{a * b};
+        while (res != a) {
+            res *= b;
+            REQUIRE(res.degree() < TestType::gfOrder());
+        }
     }
     SECTION("Division") {
         TestType a(10);
@@ -272,17 +273,17 @@ TEST_CASE("Pow single template param arithmetic", "[PowGFElem]") {
 
 TEST_CASE("Table single template param arithmetic", "[TableGFElem]") {
     SECTION("Reduction") {
-        REQUIRE(static_cast<size_t>(tableElem(10, 11, mul, div).val()) == 1);
-        REQUIRE(tableElem(11, 11, mul, div).val() == 0);
-        REQUIRE(tableElem(1, 11, mul, div).val() == 1);
-        REQUIRE(tableElem(42, 11, mul, div).val() == 6);
-        REQUIRE(tableElem(9, 11, mul, div).val() == 2);
+        REQUIRE(static_cast<size_t>(tableElem(10, 11, mul, div1).val()) == 1);
+        REQUIRE(tableElem(11, 11, mul, div1).val() == 0);
+        REQUIRE(tableElem(1, 11, mul, div1).val() == 1);
+        REQUIRE(tableElem(42, 11, mul, div1).val() == 6);
+        REQUIRE(tableElem(9, 11, mul, div1).val() == 2);
     }
     SECTION("Data access") {
-        tableElem a(10, 11, mul, div);
+        tableElem a(10, 11, mul, div1);
         REQUIRE(a.val() == 1);
-        REQUIRE(tableElem(a, mul, div).val() == 1);
-        REQUIRE(tableElem(a.val() + 2, 11, mul, div).val() == 3);
+        REQUIRE(tableElem(a, mul, div1).val() == 1);
+        REQUIRE(tableElem(a.val() + 2, 11, mul, div1).val() == 3);
         REQUIRE(a.gfDegree() == 3);
     }
     SECTION("Addition") {
@@ -300,48 +301,48 @@ TEST_CASE("Table single template param arithmetic", "[TableGFElem]") {
         REQUIRE(a + tableElem(17, 11) == tableElem(0, 11));
     }
     SECTION("Multiplication") {
-        tableElem a(10, 11, mul, div);
-        tableElem b(1, 11, mul, div);
+        tableElem a(10, 11, mul, div1);
+        tableElem b(1, 11, mul, div1);
         REQUIRE(a.val() == 1);
         REQUIRE(b.val() == 1);
         REQUIRE((a * b).val() == 1);
-        REQUIRE(tableElem(42, 11, mul, div) * tableElem(42, 11, mul, div) == tableElem(2, 11, mul, div));
-        REQUIRE(tableElem(42, 11, mul, div) * tableElem(0, 11, mul, div) == tableElem(0, 11, mul, div));
-        REQUIRE(tableElem(3, 11, mul, div) * tableElem(3, 11, mul, div) == tableElem(5, 11, mul, div));
-        REQUIRE(tableElem(7, 11, mul, div) * tableElem(4, 11, mul, div) == tableElem(1, 11, mul, div));
-        REQUIRE(tableElem(5, 11, mul, div) * tableElem(3, 11) == tableElem(4, 11, mul, div));
-        REQUIRE((a *= tableElem(40, 11, mul, div)) == tableElem(4, 11, mul, div));
+        REQUIRE(tableElem(42, 11, mul, div1) * tableElem(42, 11, mul, div1) == tableElem(2, 11, mul, div1));
+        REQUIRE(tableElem(42, 11, mul, div1) * tableElem(0, 11, mul, div1) == tableElem(0, 11, mul, div1));
+        REQUIRE(tableElem(3, 11, mul, div1) * tableElem(3, 11, mul, div1) == tableElem(5, 11, mul, div1));
+        REQUIRE(tableElem(7, 11, mul, div1) * tableElem(4, 11, mul, div1) == tableElem(1, 11, mul, div1));
+        REQUIRE(tableElem(5, 11, mul, div1) * tableElem(3, 11) == tableElem(4, 11, mul, div1));
+        REQUIRE((a *= tableElem(40, 11, mul, div1)) == tableElem(4, 11, mul, div1));
         REQUIRE(a.val() == 4);
     }
     SECTION("Division") {
-        tableElem a(10, 11, mul, div);
-        tableElem b(1, 11, mul, div);
+        tableElem a(10, 11, mul, div1);
+        tableElem b(1, 11, mul, div1);
         REQUIRE(a.val() == 1);
         REQUIRE(b.val() == 1);
         REQUIRE((a / b).val() == 1);
-        REQUIRE((tableElem(2, 11, mul, div) / tableElem(6, 11, mul, div)).val() == 6);
-        REQUIRE((tableElem(6, 11, mul, div) / tableElem(6, 11, mul, div)).val() == 1);
-        REQUIRE((tableElem(10, 11, mul, div) / tableElem(7, 11, mul, div)).val() == 4);
-        REQUIRE((tableElem(10, 11, mul, div) / tableElem(4, 11, mul, div)).val() == 7);
-        REQUIRE((tableElem(4, 11, mul, div) / tableElem(5, 11, mul, div)).val() == 3);
-        REQUIRE((tableElem(4, 11, mul, div) / tableElem(8, 11, mul, div)).val() == 5);
+        REQUIRE((tableElem(2, 11, mul, div1) / tableElem(6, 11, mul, div1)).val() == 6);
+        REQUIRE((tableElem(6, 11, mul, div1) / tableElem(6, 11, mul, div1)).val() == 1);
+        REQUIRE((tableElem(10, 11, mul, div1) / tableElem(7, 11, mul, div1)).val() == 4);
+        REQUIRE((tableElem(10, 11, mul, div1) / tableElem(4, 11, mul, div1)).val() == 7);
+        REQUIRE((tableElem(4, 11, mul, div1) / tableElem(5, 11, mul, div1)).val() == 3);
+        REQUIRE((tableElem(4, 11, mul, div1) / tableElem(8, 11, mul, div1)).val() == 5);
     }
     SECTION("Galois power") {
-        REQUIRE(GFlinalg::pow(tableElem(10, 11, mul, div), 2) == tableElem(1, 11, mul, div));
-        REQUIRE(GFlinalg::pow(tableElem(15, 11, mul, div), 3) == tableElem(5, 11, mul, div));
-        REQUIRE(GFlinalg::pow(tableElem(3, 11, mul, div), 3) == tableElem(4, 11, mul, div));
-        REQUIRE(GFlinalg::pow(tableElem(42, 11, mul, div), 7) == tableElem(1, 11, mul, div));
-        REQUIRE(GFlinalg::pow(tableElem(42, 11, mul, div), 8) == tableElem(42, 11, mul, div));
-        REQUIRE(tableElem(42, 11, mul, div) * GFlinalg::pow(tableElem(42, 11, mul, div), 6) == tableElem(1, 11, mul, div));
+        REQUIRE(GFlinalg::pow(tableElem(10, 11, mul, div1), 2) == tableElem(1, 11, mul, div1));
+        REQUIRE(GFlinalg::pow(tableElem(15, 11, mul, div1), 3) == tableElem(5, 11, mul, div1));
+        REQUIRE(GFlinalg::pow(tableElem(3, 11, mul, div1), 3) == tableElem(4, 11, mul, div1));
+        REQUIRE(GFlinalg::pow(tableElem(42, 11, mul, div1), 7) == tableElem(1, 11, mul, div1));
+        REQUIRE(GFlinalg::pow(tableElem(42, 11, mul, div1), 8) == tableElem(42, 11, mul, div1));
+        REQUIRE(tableElem(42, 11, mul, div1) * GFlinalg::pow(tableElem(42, 11, mul, div1), 6) == tableElem(1, 11, mul, div1));
     }
     SECTION("Compare operators") {
-        REQUIRE(tableElem(42, 11, mul, div) > tableElem(5, 11, mul, div));
-        REQUIRE(tableElem(5, 11, mul, div) > tableElem(4, 11, mul, div));
-        REQUIRE(tableElem(10, 11, mul, div) < tableElem(2, 11, mul, div));
-        REQUIRE(tableElem(42, 11, mul, div) < tableElem(17, 11, mul, div));
-        REQUIRE(tableElem(42, 11, mul, div) > tableElem(128, 11, mul, div));
-        REQUIRE(tableElem(176, 11, mul, div) >= tableElem(0, 11, mul, div));
-        REQUIRE(tableElem(176, 11, mul, div) <= tableElem(0, 11, mul, div));
+        REQUIRE(tableElem(42, 11, mul, div1) > tableElem(5, 11, mul, div1));
+        REQUIRE(tableElem(5, 11, mul, div1) > tableElem(4, 11, mul, div1));
+        REQUIRE(tableElem(10, 11, mul, div1) < tableElem(2, 11, mul, div1));
+        REQUIRE(tableElem(42, 11, mul, div1) < tableElem(17, 11, mul, div1));
+        REQUIRE(tableElem(42, 11, mul, div1) > tableElem(128, 11, mul, div1));
+        REQUIRE(tableElem(176, 11, mul, div1) >= tableElem(0, 11, mul, div1));
+        REQUIRE(tableElem(176, 11, mul, div1) <= tableElem(0, 11, mul, div1));
     }
 }
 
