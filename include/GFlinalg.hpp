@@ -3,6 +3,7 @@
 #include <array>
 #include <stdexcept>
 #include <iostream>
+#include <string>
 #include <memory>
 
 
@@ -110,6 +111,7 @@ namespace GFlinalg {
          *  written first.
          *
          *  Example:
+         *
          *  Let a be a GF element with coefficients {1,0,1,1};
          *
          *  out << a; - Results in x^3 + x + 1 being written to "out";
@@ -142,7 +144,7 @@ namespace GFlinalg {
         //! Pair of arrays, used as LUTs
         template <class T, T modPol>
         struct  LUTArrPair {
-            static constexpr uint64_t order = 1U << modPolDegree<T>(modPol);
+            static constexpr uint64_t order = (1U << modPolDegree<T>(modPol));
             std::array<T, (order - 1) << 1> indToPol; /*!<Look-up table, converts powers of primitive element to polynomials */
             std::array<size_t, order> polToInd; /*!<Look-up table, converts polynomials to powers of primitive element*/
             /*!
@@ -173,7 +175,10 @@ namespace GFlinalg {
         struct LUTVectPair {
             std::vector<T> indToPol;
             std::vector<T> polToInd;
-            LUTVectPair(const T& modPol, size_t order) : polToInd((order-1)<<1), indToPol(order) {
+            size_t order;
+            LUTVectPair(const T& modPol) : order(1U << modPolDegree<T>(modPol)) {
+                polToInd.resize(order); 
+                indToPol.resize((order - 1) << 1);
                 BasicGFElem<T> counter{1, modPol};
                 BasicGFElem<T> modifier{2, modPol};
                 for (size_t i = 0; i < order - 1; ++i) {
@@ -186,8 +191,6 @@ namespace GFlinalg {
                     indToPol[i] = indToPol[i - order + 1];
                 }
             }
-            LUTVectPair(size_t length1, size_t length2) :indToPol(length1), polToInd(length2) {}
-            LUTVectPair(size_t length) :indToPol(length << 1), polToInd(length) {}
             LUTVectPair(const LUTVectPair&& lut) : polToInd(std::move(lut.polToInd)),
                 indToPol(std::move(lut.indToPol)) {
             }
@@ -201,12 +204,15 @@ namespace GFlinalg {
     //! Polynomial based GF element class
     /**
      *
-     *Basic GF element class. All math operations are done directly in polynomial form.
+     * Basic GF element class. All math operations are done directly in polynomial form.
      *
      *  Operation complexity:
      *  * " + " - O(1)
      *  * " * " - O(n^2)
      *  * " / " - O(log^2(order) + n^2)
+     *
+     *  Memory complexity: O(1)
+     *  
      */
     template <class T, T modPol>
     class  BasicBinPolynomial {
@@ -220,8 +226,8 @@ namespace GFlinalg {
         explicit BasicBinPolynomial() : value(0) {}
         //! Simple constructor.
         /*!
-         * \param val unsigned integer type template class. Used to store the value internaly
-         * \param doReduce bool parameter, by default is true. Determines reduction of the stored value.
+         * \param val polynomial written in binary form e.g. x^4 + x^2 -> 10100 (20)
+         * \param doReduce by default is true. Determines if the stored value should be reduced.
          */
         explicit BasicBinPolynomial(const T& val, bool doReduce = true) : value(val) {
             if (doReduce) reduce();
@@ -232,7 +238,9 @@ namespace GFlinalg {
          * \param second iterator to the end of the container
          *
          * Construct polynomial from a container (coefficients are passed in left to right)
+         *
          *   Example 1: {1,0,1,0,0} -> x^4 + x^2 (10100)
+         *
          *   Example 2: {1,1,1,0,0,1} -> x^5 + x^4 + x^3 + 1 (111001)
          */
         template<typename Iter>
@@ -249,6 +257,7 @@ namespace GFlinalg {
         T val() const noexcept { return value; }
         /*!
          * Returns polynomial in the contained form
+         *
          * Note: using this operator to alter contained value violates internal
          *      invariant. To resolve, use "reduce()" method.
          */
@@ -277,7 +286,9 @@ namespace GFlinalg {
         }
         /*!
          * Returns inverse of polynomial
+         *
          *    e.g. For polynomial "a" returns "a^(-1)" such that:
+         *
          *    a * a^(-1) == a^(-1) * a == 1
          */
         BasicBinPolynomial getInverse() {
@@ -386,6 +397,8 @@ namespace GFlinalg {
      *  *  " * " - O(1)
      *  *  " / " - O(1)
      *
+     *  Memory complexity: O(2^n)
+     *
      */
     template <class T, T modPol>
     class PowBinPolynomial : public BasicBinPolynomial<T, modPol> {
@@ -433,6 +446,7 @@ namespace GFlinalg {
          *  a is the primitive element
          *
          *  x * y = z;
+         *
          *  x -LUT-> a^u; y-LUT-> a^v;
          *
          *  x * y = a^u * a^v = a^(u+v) -LUT-> z
@@ -522,6 +536,9 @@ namespace GFlinalg {
      *   * " + " - O(1)
      *   * " * " - O(1)
      *   * " / " - O(1)
+     *
+     *   Memory complexity: O(4^n)
+     *
      */
     template <class T, T modPol>
     class TableBinPolynomial : public BasicBinPolynomial<T, modPol> {
@@ -529,7 +546,7 @@ namespace GFlinalg {
         using BasicBinPolynomial<T, modPol>::order;
         using BasicBinPolynomial<T, modPol>::value;
         using BasicBinPolynomial<T, modPol>::BasicBinPolynomial;
-        using GFtable = std::array<std::array<T, order>, order>;
+        using GFtable = std::array<T, order * order>;
     private:
         static const GFtable mulTable; /*<Internal multiplication table */
         static const GFtable divTable; /*<Internal Division table */
@@ -550,8 +567,8 @@ namespace GFlinalg {
                 for (size_t j = i; j < order; ++j) {
                     BasicBinPolynomial<T, modPol> a(i);
                     BasicBinPolynomial<T, modPol> b(j);
-                    temp[a.val()][b.val()] = (a * b).val();
-                    temp[b.val()][a.val()] = temp[a.val()][b.val()];
+                    temp[a.val() * order + b.val()] = (a * b).val();
+                    temp[b.val() * order + a.val()] = temp[a.val() * order + b.val()];
                 }
             }
             return temp;
@@ -572,8 +589,8 @@ namespace GFlinalg {
                 for (size_t j = i; j < order; ++j) {
                     BasicBinPolynomial<T, modPol> a(i);
                     BasicBinPolynomial<T, modPol> b(j);
-                    temp[mulTable[a.val()][b.val()]][a.val()] = b.val();
-                    temp[mulTable[a.val()][b.val()]][b.val()] = a.val();
+                    temp[mulTable[a.val() * order + b.val()] * order + a.val()] = b.val();
+                    temp[mulTable[a.val() * order + b.val()] * order + b.val()] = a.val();
                 }
             }
             return temp;
@@ -589,7 +606,7 @@ namespace GFlinalg {
                 for (size_t j = 0; j < order; ++j) {
                     BasicBinPolynomial<T, modPol> a(i);
                     BasicBinPolynomial<T, modPol> b(j);
-                    temp[a.value][b.value] = (a / b).val();
+                    temp[a.value * order + b.value] = (a / b).val();
                 }
             }
             divTable = temp;
@@ -607,7 +624,7 @@ namespace GFlinalg {
         }
         //! Multiplies elements in Galois field using multiplication table
         TableBinPolynomial operator * (const TableBinPolynomial& other) const {
-            return TableBinPolynomial(mulTable[this->val()][other.val()], false);
+            return TableBinPolynomial(mulTable[this->val() * order + other.val()], false);
         }
 
         //! Multiplies elements in Galois field using multiplication table
@@ -619,7 +636,7 @@ namespace GFlinalg {
         TableBinPolynomial operator / (const TableBinPolynomial& other) const {
             if (other.value == 0)
                 throw std::out_of_range("Division by zero");
-            return TableBinPolynomial(divTable[this->val()][other.val()], false);
+            return TableBinPolynomial(divTable[this->val() * order + other.val()], false);
         }
         //! Divides elements in Galois field using division table
         TableBinPolynomial& operator /= (const TableBinPolynomial& other) {
@@ -650,7 +667,7 @@ namespace GFlinalg {
      *  " * " - O(n^2)
      *  " / " - O(log^2(order) + n^2)
      *
-     *  Note: Primitive element modulus polynomial is stored in class instances.
+     *  Note: Primitive modulus polynomial is stored in class instances.
      */
     template <class T>
     class BasicGFElem {
@@ -674,13 +691,17 @@ namespace GFlinalg {
         }
         //! Iterator based constructor
         /*!
-          \param first iterator to the start of the container
-          \param second iterator to the end of the container
-          \param modulus modulus polynomial
-          Construct polynomial from a container (coefficients are passed in left to right)
-            Example 1: {1,0,1,0,0} -> x^4 + x^2 (10100)
-            Example 2: {1,1,1,0,0,1} -> x^5 + x^4 + x^3 + 1 (111001)
-        */
+         *\param first iterator to the start of the container
+         *\param second iterator to the end of the container
+         *\param modulus modulus polynomial
+         *
+         *Construct polynomial from a container (coefficients are passed in left to right)
+         *
+         *  Example 1: {1,0,1,0,0} -> x^4 + x^2 (10100)
+         *
+         *  Example 2: {1,1,1,0,0,1} -> x^5 + x^4 + x^3 + 1 (111001)
+         *
+         */
         template<typename Iter>
         explicit constexpr BasicGFElem(Iter first, Iter last, const T& modulus) : value(0), modPol(modulus), SZ(0), order(0) {
             while (first != last) {
@@ -694,14 +715,18 @@ namespace GFlinalg {
         }
         //! Iterator based constructor
         /*!
-          \param first iterator to the start of the container with GF element
-          \param second iterator to the end of the container with GF element
-          \param firstMod iterator to the start of the container with modulus polynomial
-          \param secondMod iterator to the end of the container with modulus polynomial
-          Construct polynomial from a container (coefficients are passed in left to right)
-            Example 1: {1,0,1,0,0} -> x^4 + x^2 (10100)
-            Example 2: {1,1,1,0,0,1} -> x^5 + x^4 + x^3 + 1 (111001)
-        */
+         *\param first iterator to the start of the container with GF element
+         *\param second iterator to the end of the container with GF element
+         *\param firstMod iterator to the start of the container with modulus polynomial
+         *\param secondMod iterator to the end of the container with modulus polynomial
+         *
+         *Construct polynomial from a container (coefficients are passed in left to right)
+         *
+         *  Example 1: {1,0,1,0,0} -> x^4 + x^2 (10100)
+         *
+         *  Example 2: {1,1,1,0,0,1} -> x^5 + x^4 + x^3 + 1 (111001)
+         *
+         */
         template<typename Iter>
         explicit constexpr BasicGFElem(Iter first, Iter last, Iter firstMod, Iter lastMod) : value(0), modPol(0), SZ(0), order(0) {
             while (first != last) {
@@ -721,11 +746,12 @@ namespace GFlinalg {
         //! Returns copy of the polynomial in the contained form
         T val() const { return value; }
         /*!
-          Returns polynomial in the contained form
-          Note: using this operator to alter contained value violates internal
-                invariant. To resolve, use "reduce()" method.
-
-        */
+         * Returns polynomial in the contained form
+         *
+         * Note: using this operator to alter contained value violates internal
+         *       invariant. To resolve, use "reduce()" method.
+         *
+         */
         T& val() { return value; }
         T modpol = modPol;
         //! For GF(2^n) returns n
@@ -746,19 +772,25 @@ namespace GFlinalg {
             return value;
         }
         /*!
-        Returns inverse of polynomial
-            e.g. For polynomial "a" returns "a^(-1)" such that:
-            a * a^(-1) == a^(-1) * a == 1
-        */
+         * Returns inverse of polynomial
+         *
+         *  e.g. For polynomial "a" returns "a^(-1)" such that:
+         *
+         *  a * a^(-1) == a^(-1) * a == 1
+         *
+         */
         BasicGFElem getInverse() {
             return pow<BasicGFElem>(*this, order - 2);
         }
         /*!
-        Inverts polynomial
-            e.g. For polynomial "a" calculates a^(-1) such that:
-            a * a^(-1) == a^(-1) * a == 1
-            and sets a = a^(-1)
-        */
+         * Inverts polynomial
+         *   e.g. For polynomial "a" calculates a^(-1) such that:
+         *
+         *   a * a^(-1) == a^(-1) * a == 1
+         *
+         *   and sets a = a^(-1)
+         *
+         */
         BasicGFElem& invert() {
             *this = pow<BasicGFElem>(*this, order - 2);
             return *this;
@@ -862,16 +894,22 @@ namespace GFlinalg {
     }
 
 
-    /*
-    GF element class; uses convertion to power of primitive element through a LUT internaly
-       Operation complexity:
-       " + " - O(1)
-       " * " - O(1)
-       " / " - O(1)
-       Note 1: primitive modulus polynomial is stored in individual instances
-       Note 2: uses a LUTPair pointer internally; To make the LUTPair use LUTPair<T>::makeLUT(params...)
-               the LUT is generated for the specific field; use LUT-s with propper parameters.
-   */
+    /*!
+     * GF element class; uses convertion to power of primitive element through a LUT internaly
+     *
+     *   Operation complexity:
+     *   " + " - O(1)
+     *   " * " - O(1)
+     *   " / " - O(1)
+     *
+     *   Memory complexity: O(2^n)
+     *
+     *   Note 1: Primitive modulus polynomial is stored in individual instances
+     *
+     *   Note 2: Uses a LUTPair pointer internally; To make the LUTPair use LUTVectPair<T>(params...)
+     *           the LUT is generated for the specific field; use LUT-s with propper parameters.
+     *
+     */
     template<class T>
     class PowGFElem : public BasicGFElem<T> {
     protected:
@@ -890,7 +928,7 @@ namespace GFlinalg {
             alphaToIndex = lut;
         }
 
-        // Access the internal look-up table
+        //! Access the internal look-up table
         LUTVectPair<T> const* lut() const {
             return alphaToIndex;
         }
@@ -959,29 +997,34 @@ namespace GFlinalg {
     }
 
 
-    /*
-    Table based GF element class. All math operations are done using multiplication table and division table
-        Operation complexity:
-        " + " - O(1)
-        " * " - O(1)
-        " / " - O(1)
-    */
+    /*!
+     * Table based GF element class. All math operations are done using multiplication table and division table
+     *
+     *   Operation complexity:
+     *   * " + " - O(1)
+     *   * " * " - O(1)
+     *   * " / " - O(1)
+     *
+     *   Memory complexity: O(4^n)
+     *
+     *   Note 1: Primitive modulus polynomial is stored in individual instances
+     *
+     *   Note 2: Uses a std::vector<T> pointer internally to access the tables; To make the tables use makeMulTable(params...)
+     *           the LUT is generated for the specific field; use LUT-s with propper parameters.
+     *
+     *   Note 3: Data access whithin the tables is done using the following method:
+     *
+     *           Table[a][b] -> Table[a * order +  b];
+     *
+     *           This documentation will imply Table[a * order +  b] when using Table[a][b] notation.
+     *
+     */
     template <class T>
     class TableGFElem : public BasicGFElem<T> {
     public:
-        struct GFtable {
-            std::vector<std::vector<T>> data;
-            GFtable(size_t rowCount, size_t colCount) : data(rowCount, std::vector<T>(colCount)) {}
-            size_t rowCount() const { return data.size(); }
-            size_t colCount() const {
-                if (rowCount() != 0)
-                    return data[0].size();
-                return 0;
-            }
-        };
     private:
-        GFtable const* mulTable = nullptr;
-        GFtable const* divTable = nullptr;
+        std::vector<T> const* mulTable = nullptr;
+        std::vector<T> const* divTable = nullptr;
         using BasicGFElem<T>::order;
         using BasicGFElem<T>::value;
         using BasicGFElem<T>::modPol;
@@ -989,77 +1032,91 @@ namespace GFlinalg {
     public:
 
         explicit TableGFElem(const BasicGFElem<T>& pol) : BasicGFElem<T>(pol) {}
-        explicit TableGFElem(const T& val, const T& modPol, GFtable const* mulTable_, GFtable const* divTable_) : BasicGFElem<T>(val, modPol) {
+        explicit TableGFElem(const T& val, const T& modPol,  std::vector<T> const* mulTable_,  std::vector<T> const* divTable_) : BasicGFElem<T>(val, modPol) {
             mulTable = mulTable_;
             divTable = divTable_;
         }
-        explicit TableGFElem(const BasicGFElem<T>& pol, GFtable const* mulTable_, GFtable const* divTable_) : BasicGFElem<T>(pol) {
+        explicit TableGFElem(const BasicGFElem<T>& pol,  std::vector<T> const* mulTable_,  std::vector<T> const* divTable_) : BasicGFElem<T>(pol) {
             mulTable = mulTable_;
             divTable = divTable_;
         }
 
-        /*
-        Creates multiplication table (GFtable):
-            Table[pol1][pol2] = pol1 * pol2;
-        */
-        static GFtable* makeMulTable(size_t order, const T& modPol) {
-            GFtable* temp = new GFtable(order, order);
-            // Note: requires checking whether we have traversed through all elements
+        /*!
+         * Creates multiplication table (std::vector<T>):
+         *
+         *    Table[pol1][pol2] = pol1 * pol2;
+         *
+         */
+        static std::vector<T> makeMulTable(const T& modPol) {
+            size_t order = 1U << op::modPolDegree<T>(modPol);
+            std::vector<T> temp(order * order);
+            size_t tempVal = 0;
             for (size_t i = 0; i < order; ++i) {
                 for (size_t j = i; j < order; ++j) {
                     BasicGFElem<T> a(i, modPol);
                     BasicGFElem<T> b(j, modPol);
-                    temp->data[a.val()][b.val()] = (a * b).val();
-                    temp->data[b.val()][a.val()] = temp->data[a.val()][b.val()];
+                    tempVal = a.val() * order + b.val();
+                    temp[tempVal] = (a * b).val();
+                    temp[b.val() * order + a.val()] = temp[tempVal];
                 }
             }
             return temp;
         }
 
         /*
-        Creates division table (GFtable) using multiplication table:
-            Table[pol1 * pol2][pol2] = pol1;
-            Table[pol1 * pol2][pol1] = pol2;
-
-        Note: multiplication table is required to create this table
-        */
-        static GFtable* makeInvMulTable(GFtable const* mulTable, const T& modPol) {
-            GFtable* temp = new GFtable(mulTable->rowCount(), mulTable->colCount());
-            for (size_t i = 0; i < mulTable->rowCount(); ++i) {
-                for (size_t j = i; j < mulTable->colCount(); ++j) {
+         * Creates division table ( std::vector<T>) using multiplication table:
+         *
+         *    Table[pol1 * pol2][pol2] = pol1;
+         *
+         *    Table[pol1 * pol2][pol1] = pol2;
+         *
+         *
+         * Note: multiplication table is required to create this table
+         *
+         */
+        static std::vector<T> makeInvMulTable(std::vector<T> const* mulTable, const T& modPol) {
+            size_t order = 1U << op::modPolDegree<T>(modPol);
+            std::vector<T> temp(order * order);
+            size_t tempVal = 0;
+            for (size_t i = 0; i < order; ++i) {
+                for (size_t j = i; j < order; ++j) {
                     BasicGFElem<T> a(i, modPol);
                     BasicGFElem<T> b(j, modPol);
-                    temp->data[mulTable->data[a.val()][b.val()]][a.val()] = b.val();
-                    temp->data[mulTable->data[a.val()][b.val()]][b.val()] = a.val();
+                    tempVal = a.val() * order + b.val();
+                    temp[mulTable->at(tempVal) * order + a.val()] = b.val();
+                    temp[mulTable->at(tempVal) * order + b.val()] = a.val();
                 }
             }
             return temp;
         }
-        /*
-        Creates division table (GFtable) :
-            Table[pol1][pol2] = pol1 / pol2;
-        */
-        static GFtable* makeDivTable(size_t order, const T& modPol) {
-            GFtable* temp = new GFtable(order, order);
+        /*!
+         * Creates division table (std::vector<T>) :
+         *
+         *    Table[pol1][pol2] = pol1 / pol2;
+         *
+         */
+        static std::vector<T> makeDivTable(const T& modPol) {
+            size_t order = 1U << op::modPolDegree<T>(modPol);
+            std::vector<T> temp(order * order);
             for (size_t i = 0; i < order; ++i) {
                 for (size_t j = 0; j < order; ++j) {
                     BasicGFElem<T> a(i, modPol);
                     BasicGFElem<T> b(j, modPol);
-                    temp->data[a.value][b.value] = (a / b).val();
+                    temp[a.value * order + b.value] = (a / b).val();
                 }
             }
             return temp;
         }
-        GFtable* multable() {
+         std::vector<T>* multable() {
             return mulTable;
         }
-        GFtable* multable() const {
+         std::vector<T>* multable() const {
             return mulTable;
         }
-        GFtable* divtable() {
+         std::vector<T>* divtable() {
             return divTable;
         }
-        GFtable* divtable() const {
+         std::vector<T>* divtable() const {
             return divTable;
         }
 
@@ -1077,7 +1134,7 @@ namespace GFlinalg {
         TableGFElem operator * (const TableGFElem& other) const {
             if (other.modPol != this->modPol)
                 throw std::runtime_error("Cannot perform multiplication for elements of different fields");
-            return TableGFElem(mulTable->data[this->val()][other.val()], modPol, mulTable, divTable);
+            return TableGFElem(mulTable->at(this->val() * order + other.val()), modPol, mulTable, divTable);
         }
 
 
@@ -1091,7 +1148,7 @@ namespace GFlinalg {
                 throw std::runtime_error("Cannot perform division for elements of different fields");
             if (other.value == 0)
                 throw std::out_of_range("Division by zero");
-            return TableGFElem(divTable->data[this->val()][other.val()], modPol, mulTable, divTable);
+            return TableGFElem(divTable->at(this->val() * order + other.val()), modPol, mulTable, divTable);
         }
 
         TableGFElem& operator /= (const TableGFElem& other) {

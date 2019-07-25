@@ -18,21 +18,21 @@ typedef GFlinalg::PowBinPolynomial<uint32_t, 37> powPol32;
 typedef GFlinalg::TableBinPolynomial<uint32_t, 37> tablePol32;
 // Comment this if you are having problems building project
 template<>
-const powPol8::LUTPair powPol8::alphaToIndex = powPol8::makeAlphaToIndex();
+const GFlinalg::op::LUTArrPair<uint8_t, 11> powPol8::alphaToIndex{};
 template<>
 const tablePol8::GFtable tablePol8::mulTable = tablePol8::makeMulTable();
 template<>
 const tablePol8::GFtable tablePol8::divTable = tablePol8::makeInvMulTable();
 
 template<>
-const powPol16::LUTPair powPol16::alphaToIndex = powPol16::makeAlphaToIndex();
+const GFlinalg::op::LUTArrPair<uint16_t, 19> powPol16::alphaToIndex{};
 template<>                                     
 const tablePol16::GFtable tablePol16::mulTable = tablePol16::makeMulTable();
 template<>                                     
 const tablePol16::GFtable tablePol16::divTable = tablePol16::makeInvMulTable();
 
 template<>
-const powPol32::LUTPair powPol32::alphaToIndex = powPol32::makeAlphaToIndex();
+const GFlinalg::op::LUTArrPair<uint32_t, 37> powPol32::alphaToIndex{};
 template<>                                     
 const tablePol32::GFtable tablePol32::mulTable = tablePol32::makeMulTable();
 template<>                                     
@@ -105,7 +105,7 @@ static void BM_MulAlt(benchmark::State& state) {
     for (auto _ : state) {
         Pol a(uid(rd));
         Pol b(uid(rd));
-        auto temp(a * b);
+        Pol temp(a * b);
         while (temp != a) {
             temp *= b;
         }

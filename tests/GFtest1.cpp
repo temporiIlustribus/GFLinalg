@@ -22,13 +22,12 @@ template<>
 const tablePol::GFtable tablePol::divTable = tablePol::makeInvMulTable();
 //
 GFlinalg::LUTVectPair<uint8_t> LUT{11};
-std::shared_ptr<GFlinalg::LUTVectPair<uint8_t>> LUTptr(&LUT);
-auto const* lut1 = LUTptr.get();
+GFlinalg::LUTVectPair<uint8_t> const* lut1(&LUT);
+std::vector<uint8_t> mul_table(tableElem::makeMulTable(11));
+std::vector<uint8_t> const* mul = &mul_table;
+std::vector<uint8_t> div_table(tableElem::makeInvMulTable(mul, 11));
 
-std::shared_ptr<tableElem::GFtable> MulTable(tableElem::makeMulTable(8, 11));
-tableElem::GFtable const* mul = MulTable.get();
-std::shared_ptr<tableElem::GFtable> DivTable(tableElem::makeInvMulTable(mul, 11));
-tableElem::GFtable const* div1 = DivTable.get();
+std::vector<uint8_t> const* div1 = &div_table;
 
 TEMPLATE_TEST_CASE("Basic arithmetic", "[template]", basicPol, powPol, tablePol) {
     SECTION("Reduction") {
@@ -345,6 +344,3 @@ TEST_CASE("Table single template param arithmetic", "[TableGFElem]") {
         REQUIRE(tableElem(176, 11, mul, div1) <= tableElem(0, 11, mul, div1));
     }
 }
-
-
-
