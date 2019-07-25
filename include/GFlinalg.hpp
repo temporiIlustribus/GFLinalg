@@ -979,7 +979,7 @@ namespace GFlinalg {
         PowGFElem operator + (const PowGFElem& other) const {
             if (other.modPol != this->modPol)
                 throw std::runtime_error("Cannot perform addition for elements of different fields");
-            return  PowGFElem(val() ^ other.val(),modPol, alphaToIndex);
+            return  PowGFElem(this->val() ^ other.val(),modPol, alphaToIndex);
         }
 
         PowGFElem operator += (const PowGFElem& other) {
@@ -1123,7 +1123,7 @@ namespace GFlinalg {
         TableGFElem operator + (const TableGFElem& other) const {
             if (other.modPol != this->modPol)
                 throw std::runtime_error("Cannot perform addition for elements of different fields");
-            return TableGFElem(val() ^ other.val(), modPol, mulTable, divTable);
+            return TableGFElem(this->val() ^ other.val(), modPol, mulTable, divTable);
         }
 
         TableGFElem& operator += (const TableGFElem& other) {
