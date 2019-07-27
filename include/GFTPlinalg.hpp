@@ -78,7 +78,7 @@ namespace GFlinalg {
         static size_t gfDegree() { return SZ; }
         //! For GF(2^n) returns 2^n
         static size_t  gfOrder() { return order; }
-        //! Ñalculates the degree of the polynomial
+        //! Calculates the degree of the polynomial
         size_t degree(size_t startPos = 1) {
             return order - op::leadElemPos<T>(value, startPos);
         }
