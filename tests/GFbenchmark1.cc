@@ -3,7 +3,9 @@
 #include <random>
 #include <vector>
 #include <string>
-#include "GFlinalg.hpp"
+#include "GFSPlinalg.hpp"
+#include "GFTPlinalg.hpp"
+
 typedef GFlinalg::BasicBinPolynomial<uint8_t, 11> basicPol8;
 typedef GFlinalg::PowBinPolynomial<uint8_t, 11> powPol8;
 typedef GFlinalg::TableBinPolynomial<uint8_t, 11> tablePol8;
@@ -18,21 +20,21 @@ typedef GFlinalg::PowBinPolynomial<uint32_t, 37> powPol32;
 typedef GFlinalg::TableBinPolynomial<uint32_t, 37> tablePol32;
 // Comment this if you are having problems building project
 template<>
-const GFlinalg::op::LUTArrPair<uint8_t, 11> powPol8::alphaToIndex{};
+const GFlinalg::LUTArrPair<uint8_t, 11> powPol8::alphaToIndex{};
 template<>
 const tablePol8::GFtable tablePol8::mulTable = tablePol8::makeMulTable();
 template<>
 const tablePol8::GFtable tablePol8::divTable = tablePol8::makeInvMulTable();
 
 template<>
-const GFlinalg::op::LUTArrPair<uint16_t, 19> powPol16::alphaToIndex{};
+const GFlinalg::LUTArrPair<uint16_t, 19> powPol16::alphaToIndex{};
 template<>                                     
 const tablePol16::GFtable tablePol16::mulTable = tablePol16::makeMulTable();
 template<>                                     
 const tablePol16::GFtable tablePol16::divTable = tablePol16::makeInvMulTable();
 
 template<>
-const GFlinalg::op::LUTArrPair<uint32_t, 37> powPol32::alphaToIndex{};
+const GFlinalg::LUTArrPair<uint32_t, 37> powPol32::alphaToIndex{};
 template<>                                     
 const tablePol32::GFtable tablePol32::mulTable = tablePol32::makeMulTable();
 template<>                                     

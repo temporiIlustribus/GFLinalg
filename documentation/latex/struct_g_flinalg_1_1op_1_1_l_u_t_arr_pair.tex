@@ -1,0 +1,77 @@
+\hypertarget{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair}{}\section{G\+Flinalg\+::op\+::L\+U\+T\+Arr\+Pair$<$ T, mod\+Pol $>$ Struct Template Reference}
+\label{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair}\index{GFlinalg::op::LUTArrPair$<$ T, modPol $>$@{GFlinalg::op::LUTArrPair$<$ T, modPol $>$}}
+
+
+Pair of arrays, used as L\+U\+Ts.  
+
+
+
+
+{\ttfamily \#include $<$G\+Fbase.\+hpp$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair_a639ced221b57026c7d9881c86d219ea5}{L\+U\+T\+Arr\+Pair}} ()
+\item 
+\mbox{\Hypertarget{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair_a090a30ba2494eefdd75030ee7f26c6a8}\label{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair_a090a30ba2494eefdd75030ee7f26c6a8}} 
+{\bfseries L\+U\+T\+Arr\+Pair} (const std\+::array$<$ T,(order -\/ 1) $\ast$2 $>$ \&alph, const std\+::array$<$ size\+\_\+t, order $>$ \&ind)
+\item 
+\mbox{\Hypertarget{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair_a590037bde147d7a7bcef32fcfec58d9d}\label{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair_a590037bde147d7a7bcef32fcfec58d9d}} 
+{\bfseries L\+U\+T\+Arr\+Pair} (const std\+::pair$<$ std\+::array$<$ T,(order -\/ 1) $\ast$2 $>$, std\+::array$<$ size\+\_\+t, order $>$$>$ \&val)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+std\+::array$<$ T,(order -\/ 1)$<$$<$ 1 $>$ \mbox{\hyperlink{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair_a02a58d258f3ddfea418c6ce342bc0dc0}{ind\+To\+Pol}}
+\item 
+std\+::array$<$ size\+\_\+t, order $>$ \mbox{\hyperlink{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair_a4239b75efb0f73c38a44d16246ee980d}{pol\+To\+Ind}}
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair_a7ce023ead2aa0042227df974255f57db}\label{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair_a7ce023ead2aa0042227df974255f57db}} 
+static constexpr uint64\+\_\+t {\bfseries order} = (1\+U $<$$<$ mod\+Pol\+Degree$<$\+T$>$(mod\+Pol))
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$class T, T mod\+Pol$>$\newline
+struct G\+Flinalg\+::op\+::\+L\+U\+T\+Arr\+Pair$<$ T, mod\+Pol $>$}
+
+Pair of arrays, used as L\+U\+Ts. 
+
+\subsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair_a639ced221b57026c7d9881c86d219ea5}\label{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair_a639ced221b57026c7d9881c86d219ea5}} 
+\index{GFlinalg::op::LUTArrPair$<$ T, modPol $>$@{GFlinalg::op::LUTArrPair$<$ T, modPol $>$}!LUTArrPair@{LUTArrPair}}
+\index{LUTArrPair@{LUTArrPair}!GFlinalg::op::LUTArrPair$<$ T, modPol $>$@{GFlinalg::op::LUTArrPair$<$ T, modPol $>$}}
+\subsubsection{\texorpdfstring{LUTArrPair()}{LUTArrPair()}}
+{\footnotesize\ttfamily template$<$class T , T mod\+Pol$>$ \\
+\mbox{\hyperlink{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair}{G\+Flinalg\+::op\+::\+L\+U\+T\+Arr\+Pair}}$<$ T, mod\+Pol $>$\+::\mbox{\hyperlink{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair}{L\+U\+T\+Arr\+Pair}} (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Creates a pair of look-\/up arrays (L\+U\+T\+Pair)\+:
+\begin{DoxyItemize}
+\item ind\+To\+Pol\+: power of primitive element -\/$>$ polynomial
+\item pol\+To\+Ind\+: polynomial -\/$>$ power of primitive element 
+\end{DoxyItemize}
+
+\subsection{Member Data Documentation}
+\mbox{\Hypertarget{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair_a02a58d258f3ddfea418c6ce342bc0dc0}\label{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair_a02a58d258f3ddfea418c6ce342bc0dc0}} 
+\index{GFlinalg::op::LUTArrPair$<$ T, modPol $>$@{GFlinalg::op::LUTArrPair$<$ T, modPol $>$}!indToPol@{indToPol}}
+\index{indToPol@{indToPol}!GFlinalg::op::LUTArrPair$<$ T, modPol $>$@{GFlinalg::op::LUTArrPair$<$ T, modPol $>$}}
+\subsubsection{\texorpdfstring{indToPol}{indToPol}}
+{\footnotesize\ttfamily template$<$class T , T mod\+Pol$>$ \\
+std\+::array$<$T, (order -\/ 1) $<$$<$ 1$>$ \mbox{\hyperlink{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair}{G\+Flinalg\+::op\+::\+L\+U\+T\+Arr\+Pair}}$<$ T, mod\+Pol $>$\+::ind\+To\+Pol}
+
+Look-\/up table, converts powers of primitive element to polynomials \mbox{\Hypertarget{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair_a4239b75efb0f73c38a44d16246ee980d}\label{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair_a4239b75efb0f73c38a44d16246ee980d}} 
+\index{GFlinalg::op::LUTArrPair$<$ T, modPol $>$@{GFlinalg::op::LUTArrPair$<$ T, modPol $>$}!polToInd@{polToInd}}
+\index{polToInd@{polToInd}!GFlinalg::op::LUTArrPair$<$ T, modPol $>$@{GFlinalg::op::LUTArrPair$<$ T, modPol $>$}}
+\subsubsection{\texorpdfstring{polToInd}{polToInd}}
+{\footnotesize\ttfamily template$<$class T , T mod\+Pol$>$ \\
+std\+::array$<$size\+\_\+t, order$>$ \mbox{\hyperlink{struct_g_flinalg_1_1op_1_1_l_u_t_arr_pair}{G\+Flinalg\+::op\+::\+L\+U\+T\+Arr\+Pair}}$<$ T, mod\+Pol $>$\+::pol\+To\+Ind}
+
+Look-\/up table, converts polynomials to powers of primitive element 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+C\+:/\+Users/\+Mr.\+Techno\+Virus/\+Documents/\+Projects/2019/\+Summer\+\_\+\+G\+F\+\_\+proj/\+G\+Flinalg\+Lib/\+G\+F\+Linalg/include/G\+Fbase.\+hpp\end{DoxyCompactItemize}

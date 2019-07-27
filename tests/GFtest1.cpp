@@ -4,7 +4,8 @@
 #include <string>
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
-#include "GFlinalg.hpp"
+#include "GFTPlinalg.hpp"
+#include "GFSPlinalg.hpp"
 
 typedef GFlinalg::BasicBinPolynomial<uint8_t, 11> basicPol;
 typedef GFlinalg::PowBinPolynomial<uint8_t, 11> powPol;

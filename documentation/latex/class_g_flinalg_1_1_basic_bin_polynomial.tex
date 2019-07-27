@@ -1,0 +1,220 @@
+\hypertarget{class_g_flinalg_1_1_basic_bin_polynomial}{}\section{G\+Flinalg\+::Basic\+Bin\+Polynomial$<$ T, mod\+Pol $>$ Class Template Reference}
+\label{class_g_flinalg_1_1_basic_bin_polynomial}\index{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$@{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$}}
+
+
+Polynomial based GF element class.  
+
+
+
+
+{\ttfamily \#include $<$G\+F\+T\+Plinalg.\+hpp$>$}
+
+Inheritance diagram for G\+Flinalg\+::Basic\+Bin\+Polynomial$<$ T, mod\+Pol $>$\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{class_g_flinalg_1_1_basic_bin_polynomial}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a7eb2fdf38bab3acfd55ac9d5548452d4}\label{class_g_flinalg_1_1_basic_bin_polynomial_a7eb2fdf38bab3acfd55ac9d5548452d4}} 
+\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_a7eb2fdf38bab3acfd55ac9d5548452d4}{Basic\+Bin\+Polynomial}} ()
+\begin{DoxyCompactList}\small\item\em Default constructor. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_abe29be6adbd2e8cac7d0700008f25f3f}{Basic\+Bin\+Polynomial}} (const T \&\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_a6389212b0031b6d0a8e45cdb1392dbd7}{val}}, bool do\+Reduce=true)
+\begin{DoxyCompactList}\small\item\em Simple constructor. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Iter $>$ }\\constexpr \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_a24dfc872ab484815b9d38558d13ac074}{Basic\+Bin\+Polynomial}} (Iter first, Iter last)
+\begin{DoxyCompactList}\small\item\em Iterator based constructor. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a6389212b0031b6d0a8e45cdb1392dbd7}\label{class_g_flinalg_1_1_basic_bin_polynomial_a6389212b0031b6d0a8e45cdb1392dbd7}} 
+T \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_a6389212b0031b6d0a8e45cdb1392dbd7}{val}} () const noexcept
+\begin{DoxyCompactList}\small\item\em Returns copy of the polynomial in the contained form. \end{DoxyCompactList}\item 
+T \& \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_a86d07870227edb5553b981f3183d0f9e}{val}} () noexcept
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_ace68fc139713e8efa3d9c60d5238caf4}\label{class_g_flinalg_1_1_basic_bin_polynomial_ace68fc139713e8efa3d9c60d5238caf4}} 
+size\+\_\+t \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_ace68fc139713e8efa3d9c60d5238caf4}{degree}} (size\+\_\+t start\+Pos=1)
+\begin{DoxyCompactList}\small\item\em Ñalculates the degree of the polynomial. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_aa284c4cae139cf2895363e7c0adf2d0a}\label{class_g_flinalg_1_1_basic_bin_polynomial_aa284c4cae139cf2895363e7c0adf2d0a}} 
+T \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_aa284c4cae139cf2895363e7c0adf2d0a}{reduce}} ()
+\begin{DoxyCompactList}\small\item\em Reduces polynomial by modulus polynomial (mod\+Pol) \end{DoxyCompactList}\item 
+\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_ab2cbcd0f6bb296208a7c6430281c2cca}{get\+Inverse}} ()
+\item 
+\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \& \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_a8094917d7e143f78f735f23830f43d8a}{invert}} ()
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_ada21c9246ef9043ab94bdebbc11d9fee}\label{class_g_flinalg_1_1_basic_bin_polynomial_ada21c9246ef9043ab94bdebbc11d9fee}} 
+{\footnotesize template$<$class T1 $>$ }\\\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_ada21c9246ef9043ab94bdebbc11d9fee}{operator T1}} ()
+\begin{DoxyCompactList}\small\item\em Cast stored value to T1. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a58cb69fe885661af25bf4931abaaad17}\label{class_g_flinalg_1_1_basic_bin_polynomial_a58cb69fe885661af25bf4931abaaad17}} 
+\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \& {\bfseries operator+=} (const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \&other)
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_af0c6fb43360af5dbc4bb82037eda7299}\label{class_g_flinalg_1_1_basic_bin_polynomial_af0c6fb43360af5dbc4bb82037eda7299}} 
+\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \& \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_af0c6fb43360af5dbc4bb82037eda7299}{operator $\ast$=}} (const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \&other)
+\begin{DoxyCompactList}\small\item\em Multiplies elements in Galois Field as polynomials. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a6933900a6f4d5138dff70e2da049ac28}\label{class_g_flinalg_1_1_basic_bin_polynomial_a6933900a6f4d5138dff70e2da049ac28}} 
+\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \& \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_a6933900a6f4d5138dff70e2da049ac28}{operator/=}} (const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \&other)
+\begin{DoxyCompactList}\small\item\em Divides elements in Galois field as polynomials. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_af1e3807fd9a0ec9fa3a48d8fe29b0996}\label{class_g_flinalg_1_1_basic_bin_polynomial_af1e3807fd9a0ec9fa3a48d8fe29b0996}} 
+static size\+\_\+t \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_af1e3807fd9a0ec9fa3a48d8fe29b0996}{gf\+Degree}} ()
+\begin{DoxyCompactList}\small\item\em For G\+F(2$^\wedge$n) returns n. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a0e4a7bdebbd6f45dd7fbe57001b82e51}\label{class_g_flinalg_1_1_basic_bin_polynomial_a0e4a7bdebbd6f45dd7fbe57001b82e51}} 
+static size\+\_\+t \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_a0e4a7bdebbd6f45dd7fbe57001b82e51}{gf\+Order}} ()
+\begin{DoxyCompactList}\small\item\em For G\+F(2$^\wedge$n) returns 2$^\wedge$n. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a7484ea6892c60be64255473e0de2bbb8}\label{class_g_flinalg_1_1_basic_bin_polynomial_a7484ea6892c60be64255473e0de2bbb8}} 
+static constexpr T \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_a7484ea6892c60be64255473e0de2bbb8}{modpol}} = mod\+Pol
+\begin{DoxyCompactList}\small\item\em Primitive modulus polynomial (mod\+Pol) \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_ab3c8209291de43e602c29a434022624b}\label{class_g_flinalg_1_1_basic_bin_polynomial_ab3c8209291de43e602c29a434022624b}} 
+T {\bfseries value}
+\end{DoxyCompactItemize}
+\subsection*{Static Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a506cfa57c4b705e5715f20e802ea3048}\label{class_g_flinalg_1_1_basic_bin_polynomial_a506cfa57c4b705e5715f20e802ea3048}} 
+static constexpr size\+\_\+t {\bfseries SZ} = op\+::mod\+Pol\+Degree$<$T$>$(mod\+Pol)
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_ac9150185b4286faebfd0838eeb4e261b}\label{class_g_flinalg_1_1_basic_bin_polynomial_ac9150185b4286faebfd0838eeb4e261b}} 
+static constexpr size\+\_\+t {\bfseries order} = 1 $<$$<$ SZ
+\end{DoxyCompactItemize}
+\subsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_ac37f8a0f92d7048e0adcae41f117700c}\label{class_g_flinalg_1_1_basic_bin_polynomial_ac37f8a0f92d7048e0adcae41f117700c}} 
+const T \& \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_ac37f8a0f92d7048e0adcae41f117700c}{operator+}} (const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \&a)
+\begin{DoxyCompactList}\small\item\em Returns the stored value. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_ae1e665254d4a5b1d7124ecf90a8022e3}\label{class_g_flinalg_1_1_basic_bin_polynomial_ae1e665254d4a5b1d7124ecf90a8022e3}} 
+\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} {\bfseries operator+} (const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \&a, const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \&b)
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a03d37eed37268815ed3c957829185c55}\label{class_g_flinalg_1_1_basic_bin_polynomial_a03d37eed37268815ed3c957829185c55}} 
+\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_a03d37eed37268815ed3c957829185c55}{operator $\ast$}} (const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \&a, const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \&b)
+\begin{DoxyCompactList}\small\item\em Multiplies elements in Galois field as polynomials. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a6fe7167dabee806e90e03e75c241142c}\label{class_g_flinalg_1_1_basic_bin_polynomial_a6fe7167dabee806e90e03e75c241142c}} 
+\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial_a6fe7167dabee806e90e03e75c241142c}{operator/}} (const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \&a, const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \&b)
+\begin{DoxyCompactList}\small\item\em Divides elements in Galois field as polynomials. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_ab9397147b5c3c4330a067c57acf3b567}\label{class_g_flinalg_1_1_basic_bin_polynomial_ab9397147b5c3c4330a067c57acf3b567}} 
+{\footnotesize template$<$class T1 , T1 mod\+Pol1$>$ }\\bool {\bfseries operator==} (const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}}$<$ T1, mod\+Pol1 $>$ \&lhs, const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}}$<$ T1, mod\+Pol1 $>$ \&rhs)
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a657967bf1ec7f712f306a2baf360d0bd}\label{class_g_flinalg_1_1_basic_bin_polynomial_a657967bf1ec7f712f306a2baf360d0bd}} 
+{\footnotesize template$<$class T1 , T1 mod\+Pol1$>$ }\\bool {\bfseries operator !=} (const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}}$<$ T1, mod\+Pol1 $>$ \&lhs, const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}}$<$ T1, mod\+Pol1 $>$ \&rhs)
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a81a0b19946f6ec76b2c8af6f5006bb7b}\label{class_g_flinalg_1_1_basic_bin_polynomial_a81a0b19946f6ec76b2c8af6f5006bb7b}} 
+{\footnotesize template$<$class T1 , T1 mod\+Pol1$>$ }\\bool {\bfseries operator$<$} (const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}}$<$ T1, mod\+Pol1 $>$ \&lhs, const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}}$<$ T1, mod\+Pol1 $>$ \&rhs)
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a2e8ce053e215f9feed7735549a1df344}\label{class_g_flinalg_1_1_basic_bin_polynomial_a2e8ce053e215f9feed7735549a1df344}} 
+{\footnotesize template$<$class T1 , T1 mod\+Pol1$>$ }\\bool {\bfseries operator $>$} (const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}}$<$ T1, mod\+Pol1 $>$ \&lhs, const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}}$<$ T1, mod\+Pol1 $>$ \&rhs)
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a34108fe9ada40a1fd51ceca914fafba1}\label{class_g_flinalg_1_1_basic_bin_polynomial_a34108fe9ada40a1fd51ceca914fafba1}} 
+{\footnotesize template$<$class T1 , T1 mod\+Pol1$>$ }\\bool {\bfseries operator$<$=} (const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}}$<$ T1, mod\+Pol1 $>$ \&lhs, const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}}$<$ T1, mod\+Pol1 $>$ \&rhs)
+\item 
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a4e4069f61370aeb941251559f984de33}\label{class_g_flinalg_1_1_basic_bin_polynomial_a4e4069f61370aeb941251559f984de33}} 
+{\footnotesize template$<$class T1 , T1 mod\+Pol1$>$ }\\bool {\bfseries operator $>$=} (const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}}$<$ T1, mod\+Pol1 $>$ \&lhs, const \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}}$<$ T1, mod\+Pol1 $>$ \&rhs)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$class T, T mod\+Pol$>$\newline
+class G\+Flinalg\+::\+Basic\+Bin\+Polynomial$<$ T, mod\+Pol $>$}
+
+Polynomial based GF element class. 
+
+Basic GF element class. All math operations are done directly in polynomial form.
+
+Operation complexity\+:
+\begin{DoxyItemize}
+\item \char`\"{} + \char`\"{} -\/ O(1)
+\item \char`\"{} $\ast$ \char`\"{} -\/ O(n$^\wedge$2)
+\item \char`\"{} / \char`\"{} -\/ O(log$^\wedge$2(order) + n$^\wedge$2)
+\end{DoxyItemize}
+
+Memory complexity\+: O(1) 
+
+\subsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_abe29be6adbd2e8cac7d0700008f25f3f}\label{class_g_flinalg_1_1_basic_bin_polynomial_abe29be6adbd2e8cac7d0700008f25f3f}} 
+\index{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$@{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$}!BasicBinPolynomial@{BasicBinPolynomial}}
+\index{BasicBinPolynomial@{BasicBinPolynomial}!GFlinalg::BasicBinPolynomial$<$ T, modPol $>$@{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$}}
+\subsubsection{\texorpdfstring{BasicBinPolynomial()}{BasicBinPolynomial()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$class T , T mod\+Pol$>$ \\
+\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{G\+Flinalg\+::\+Basic\+Bin\+Polynomial}}$<$ T, mod\+Pol $>$\+::\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} (\begin{DoxyParamCaption}\item[{const T \&}]{val,  }\item[{bool}]{do\+Reduce = {\ttfamily true} }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [explicit]}}
+
+
+
+Simple constructor. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em val} & polynomial written in binary form e.\+g. x$^\wedge$4 + x$^\wedge$2 -\/$>$ 10100 (20) \\
+\hline
+{\em do\+Reduce} & by default is true. Determines if the stored value should be reduced. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a24dfc872ab484815b9d38558d13ac074}\label{class_g_flinalg_1_1_basic_bin_polynomial_a24dfc872ab484815b9d38558d13ac074}} 
+\index{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$@{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$}!BasicBinPolynomial@{BasicBinPolynomial}}
+\index{BasicBinPolynomial@{BasicBinPolynomial}!GFlinalg::BasicBinPolynomial$<$ T, modPol $>$@{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$}}
+\subsubsection{\texorpdfstring{BasicBinPolynomial()}{BasicBinPolynomial()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$class T , T mod\+Pol$>$ \\
+template$<$typename Iter $>$ \\
+constexpr \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{G\+Flinalg\+::\+Basic\+Bin\+Polynomial}}$<$ T, mod\+Pol $>$\+::\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} (\begin{DoxyParamCaption}\item[{Iter}]{first,  }\item[{Iter}]{last }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [explicit]}}
+
+
+
+Iterator based constructor. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em first} & iterator to the start of the container \\
+\hline
+{\em second} & iterator to the end of the container\\
+\hline
+\end{DoxyParams}
+Construct polynomial from a container (coefficients are passed in left to right)
+
+Example 1\+: \{1,0,1,0,0\} -\/$>$ x$^\wedge$4 + x$^\wedge$2 (10100)
+
+Example 2\+: \{1,1,1,0,0,1\} -\/$>$ x$^\wedge$5 + x$^\wedge$4 + x$^\wedge$3 + 1 (111001) 
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_ab2cbcd0f6bb296208a7c6430281c2cca}\label{class_g_flinalg_1_1_basic_bin_polynomial_ab2cbcd0f6bb296208a7c6430281c2cca}} 
+\index{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$@{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$}!getInverse@{getInverse}}
+\index{getInverse@{getInverse}!GFlinalg::BasicBinPolynomial$<$ T, modPol $>$@{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$}}
+\subsubsection{\texorpdfstring{getInverse()}{getInverse()}}
+{\footnotesize\ttfamily template$<$class T , T mod\+Pol$>$ \\
+\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}} \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{G\+Flinalg\+::\+Basic\+Bin\+Polynomial}}$<$ T, mod\+Pol $>$\+::get\+Inverse (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Returns inverse of polynomial
+
+e.\+g. For polynomial \char`\"{}a\char`\"{} returns \char`\"{}a$^\wedge$(-\/1)\char`\"{} such that\+:
+
+a $\ast$ a$^\wedge$(-\/1) == a$^\wedge$(-\/1) $\ast$ a == 1 \mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a8094917d7e143f78f735f23830f43d8a}\label{class_g_flinalg_1_1_basic_bin_polynomial_a8094917d7e143f78f735f23830f43d8a}} 
+\index{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$@{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$}!invert@{invert}}
+\index{invert@{invert}!GFlinalg::BasicBinPolynomial$<$ T, modPol $>$@{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$}}
+\subsubsection{\texorpdfstring{invert()}{invert()}}
+{\footnotesize\ttfamily template$<$class T , T mod\+Pol$>$ \\
+\mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{Basic\+Bin\+Polynomial}}\& \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{G\+Flinalg\+::\+Basic\+Bin\+Polynomial}}$<$ T, mod\+Pol $>$\+::invert (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Inverts polynomial \begin{DoxyVerb}e.g. For polynomial "a" calculates a^(-1) such that:
+
+a * a^(-1) == a^(-1) * a == 1
+
+and sets a = a^(-1)
+\end{DoxyVerb}
+ \mbox{\Hypertarget{class_g_flinalg_1_1_basic_bin_polynomial_a86d07870227edb5553b981f3183d0f9e}\label{class_g_flinalg_1_1_basic_bin_polynomial_a86d07870227edb5553b981f3183d0f9e}} 
+\index{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$@{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$}!val@{val}}
+\index{val@{val}!GFlinalg::BasicBinPolynomial$<$ T, modPol $>$@{GFlinalg::BasicBinPolynomial$<$ T, modPol $>$}}
+\subsubsection{\texorpdfstring{val()}{val()}}
+{\footnotesize\ttfamily template$<$class T , T mod\+Pol$>$ \\
+T\& \mbox{\hyperlink{class_g_flinalg_1_1_basic_bin_polynomial}{G\+Flinalg\+::\+Basic\+Bin\+Polynomial}}$<$ T, mod\+Pol $>$\+::val (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [noexcept]}}
+
+Returns polynomial in the contained form
+
+Note\+: using this operator to alter contained value violates internal invariant. To resolve, use \char`\"{}reduce()\char`\"{} method. 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+C\+:/\+Users/\+Mr.\+Techno\+Virus/\+Documents/\+Projects/2019/\+Summer\+\_\+\+G\+F\+\_\+proj/\+G\+Flinalg\+Lib/\+G\+F\+Linalg/include/G\+Fbase.\+hpp\item 
+C\+:/\+Users/\+Mr.\+Techno\+Virus/\+Documents/\+Projects/2019/\+Summer\+\_\+\+G\+F\+\_\+proj/\+G\+Flinalg\+Lib/\+G\+F\+Linalg/include/G\+F\+T\+Plinalg.\+hpp\end{DoxyCompactItemize}
