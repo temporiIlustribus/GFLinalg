@@ -90,8 +90,8 @@ Polynomial polMul(const Polynomial& a, const Polynomial& b) {
 
     res.val() = 0;
 
-    auto& av   = a.val();
-    auto& bv   = b.val();
+    auto av   = a.val();
+    auto bv   = b.val();
 
     while (bv > 0) {
         if (bv & 1)
@@ -101,7 +101,7 @@ Polynomial polMul(const Polynomial& a, const Polynomial& b) {
         av <<= 1;
 
         if (av & a.gfOrder())
-            av ^= a.modpol;
+            av ^= a.getMod();
     }
 
     return res;
@@ -149,12 +149,12 @@ std::ostream& operator<<(std::ostream& out, Polynomial pol) {
 
     while (pol.val()) {
         if (deg > 0) {
-            out << 'x';
+            out.operator<<("x");
 
             if (deg > 1)
-                out << '^' << deg;
+                out.operator<<('^') << deg;
         } else
-            out << '1';
+            out.operator<<('1');
 
         empty = false;
 
@@ -163,11 +163,11 @@ std::ostream& operator<<(std::ostream& out, Polynomial pol) {
         deg = pol.degree(deg - 1);
 
         if (pol.val())
-            out << '+';
+            out.operator<<('+');
     }
 
     if (empty)
-        out << '0';
+        out.operator<<('0');
 
     return out;
 }
@@ -216,7 +216,7 @@ struct LUTVectPair {
 
     size_t order;
 
-    LUTVectPair(const T& modPol) : order(1U << modPolDegree<T>(modPol)) {
+    explicit LUTVectPair(const T& modPol) : order(1U << modPolDegree<T>(modPol)) {
         polToInd.resize(order);
         indToPol.resize((order - 1) << 1);
 
@@ -234,7 +234,8 @@ struct LUTVectPair {
             indToPol[i] = indToPol[i - order + 1];
     }
     
-    LUTVectPair(const LUTVectPair&& lut) : polToInd(std::move(lut.polToInd)), indToPol(std::move(lut.indToPol)) {}
+    explicit LUTVectPair(const LUTVectPair&& lut)
+        : polToInd(std::move(lut.polToInd)), indToPol(std::move(lut.indToPol)) {}
 };
 } // namespace op
 

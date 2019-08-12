@@ -7,6 +7,8 @@
 #include "GFTPlinalg.hpp"
 #include "GFSPlinalg.hpp"
 
+using accessor = GFlinalg::Accessor<uint8_t>;
+
 typedef GFlinalg::BasicBinPolynomial<uint8_t, 11> basicPol;
 typedef GFlinalg::PowBinPolynomial<uint8_t, 11> powPol;
 typedef GFlinalg::TableBinPolynomial<uint8_t, 11> tablePol;
@@ -116,9 +118,6 @@ TEMPLATE_TEST_CASE("Basic arithmetic", "[template]", basicPol, powPol, tablePol)
         REQUIRE(TestType(176) <= TestType(0));
     }
 }
-
-
-
 
 TEST_CASE("Basic single template param arithmetic", "[BasicGFElem]") {
     SECTION("Reduction") {
@@ -343,5 +342,44 @@ TEST_CASE("Table single template param arithmetic", "[TableGFElem]") {
         REQUIRE(tableElem(42, 11, mul, div1) > tableElem(128, 11, mul, div1));
         REQUIRE(tableElem(176, 11, mul, div1) >= tableElem(0, 11, mul, div1));
         REQUIRE(tableElem(176, 11, mul, div1) <= tableElem(0, 11, mul, div1));
+    }
+}
+
+TEST_CASE("GF elements storage", "[Accessor]") {
+    SECTION("Empty") {
+        REQUIRE(accessor().empty());
+    }
+
+    SECTION("Insertion") {
+        accessor a;
+
+        REQUIRE(accessor().empty());
+
+        REQUIRE(!a.tryInsert(5));
+        REQUIRE(a.tryInsert(basicElem(5, 11)));
+        REQUIRE(a.size() == 1);
+
+        a.clear();
+
+        REQUIRE (a.empty());
+    }
+
+    SECTION("Iteration") {
+        accessor a;
+
+        REQUIRE(a.tryInsert(basicElem(5, 11)));
+        REQUIRE(a.tryInsert(basicElem(6, 11)));
+        REQUIRE(a.tryInsert(basicElem(7, 11)));
+        REQUIRE(a.tryInsert(basicElem(8, 11)));
+        REQUIRE(a.tryInsert(basicElem(9, 11)));
+
+        int i = 5;
+
+        using Elem = typename accessor::Value;
+
+        for (Elem& elem : a) {
+            REQUIRE(elem == i);
+            ++i;
+        }
     }
 }

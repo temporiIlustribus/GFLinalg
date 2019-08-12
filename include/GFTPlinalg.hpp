@@ -72,8 +72,12 @@ namespace GFlinalg {
          *      invariant. To resolve, use "reduce()" method.
          */
         T& val() noexcept { return value; }
+
         //! Primitive modulus polynomial (modPol)
         static constexpr T modpol = modPol;
+
+        static constexpr T getMod() { return modPol; }
+
         //! For GF(2^n) returns n
         static size_t gfDegree() { return SZ; }
         //! For GF(2^n) returns 2^n
