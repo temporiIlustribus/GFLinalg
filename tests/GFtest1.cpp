@@ -370,8 +370,6 @@ TEST_CASE("GF elements storage", "[Accessor]") {
         REQUIRE(a.tryInsert(basicElem(5, 11)));
         REQUIRE(a.tryInsert(basicElem(6, 11)));
         REQUIRE(a.tryInsert(basicElem(7, 11)));
-        REQUIRE(a.tryInsert(basicElem(8, 11)));
-        REQUIRE(a.tryInsert(basicElem(9, 11)));
 
         int i = 5;
 
