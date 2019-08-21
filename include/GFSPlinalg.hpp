@@ -86,6 +86,11 @@ public:
             this->reduce();
     }
 
+    explicit constexpr BasicGFElem(const T& value, const GFElemState<T>& state):
+        value(value) {
+        this->mState = state;
+    }
+
     /**
      * Construct %BasicGFElem using a pair of \c Iter s that provide target polynomial's coefficients.
      * Coefficients are passed left to right.
@@ -188,7 +193,7 @@ public:
     /**
      * @return For polynomial \c pol return \c pol^(-1), where <tt>pol * pol^(-1) = pol^(-1) * pol = 1</tt>
      */
-    BasicGFElem getInverse() { return pow<BasicGFElem>(*this, mState.order - 2); }
+    BasicGFElem getInverse() const { return pow<BasicGFElem>(*this, mState.order - 2); }
 
     /**
      * Set \c *this = \c getInverse();
@@ -608,158 +613,73 @@ public:
  */
 
 template <typename T>
-class AccessorIter {
-public:
-    using TIter = typename std::vector<T>::iterator;
-    using TValue = GFElemState<T>;
+struct GFElemPtr;
 
-    AccessorIter() = default;
-    AccessorIter(TIter iter, const TValue& state) : mIter(iter), mState(state) {}
-
-    AccessorIter operator ++() { return {++mIter, mState}; }
-    const AccessorIter operator ++(int) {return {mIter++, mState};}
-
-    T& operator*() { return *mIter;}
-    const TValue& getState() { return mState; }
-
-    bool operator == (const AccessorIter& iter) {
-        return mIter == iter.mIter && mState == iter.mState;
-    }
-
-    bool operator != (const AccessorIter& iter) {
-        return !(*this == iter);
-    }
-
-private:
-    TIter mIter;
-    const TValue& mState;
-};
-
-/**
- * Storage for the \c BasicGFElem and all nested classes
- */
 template <typename T>
-class AccessorBasic {
+class GFElemRef {
 public:
-    using TIter  = AccessorIter<T>;
+    using Base = BasicGFElem<T>;
+
+    GFElemPtr<T> operator &() { }
+
+    inline T& val() { return mValue; }
+
+    [[nodiscard]] inline size_t gfDegree() const { return mState.SZ; }
+    [[nodiscard]] inline size_t gfOrder() const { return mState.order; }
+
+    inline T getMod() const { return mState.modPol; }
+
+    inline T reduce() { return Base(mValue, mState).reduce(); }
+
+    inline Base getInverse() const { return Base(mValue, mState).getInverse(); }
+
+    [[nodiscard]] inline size_t degree(size_t startPos = 1) const { return Base(mValue, mState).degree(startPos); }
 
     /**
-     * @note Resulting elem state is deduced upon first insertion.
+     * Operators
      */
-    AccessorBasic() : mInited(false) {};
 
-    AccessorBasic(size_t size, size_t order, const T& modPol) : mInited(true), mState(size, order, modPol) {}
-
-    AccessorBasic(size_t size, size_t order) : mInited(true), mState(size, order) {}
-
-    explicit AccessorBasic(const GFElemState<T>& state) : mInited(true), mState(state) {}
-
-    bool tryInsert(const T& value) {
-        if (!mInited)
-            return false;
-
-        mValues.emplace_back(value);
-        return true;
+    friend GFElemRef operator+(const GFElemRef& a, const GFElemRef& b) {
+        return Base(a.mValue, a.mState) + Base(b.mValue, b.mState);
     }
 
-    bool tryInsert(T&& value) {
-        if (!mInited)
-            return false;
-
-        mValues.emplace_back(value);
-        return true;
+    friend GFElemRef operator*(const GFElemRef& a, const GFElemRef& b) {
+        return Base(a.mValue, a.mState) * Base(b.mValue, b.mState);
     }
 
-    void clear(bool clearState = false) {
-        mValues.clear();
-
-        if (clearState)
-            mInited = false;
+    friend GFElemRef operator/(const GFElemRef& a, const GFElemRef& b) {
+        return Base(a.mValue, a.mState) / Base(b.mValue, b.mState);
     }
 
-    TIter find(const T& elem) { return {mValues.find(elem), mState};}
+    template <class T1>
+    friend bool operator==(const GFElemRef<T1>& a, const GFElemRef<T1>& b) {
+        return BasicGFElem<T1>(a.mValue, a.mState) == BasicGFElem<T1>(b.mValue, b.mState);
+    }
 
-    const TIter find(const T& elem) const { return {mValues.find(elem), mState};}
+    template <class T1>
+    friend bool operator<(const GFElemRef<T1>& a, const GFElemRef<T1>& b) {
+        return BasicGFElem<T1>(a.mValue, a.mState) < BasicGFElem<T1>(b.mValue, b.mState);
+    }
 
-    TIter begin() { return {mValues.begin(), mState}; }
 
-    const TIter begin() const { return {mValues.begin(), mState}; }
-
-    TIter end() { return {mValues.end(), mState}; }
-
-    const TIter end() const { return {mValues.end(), mState}; }
-
-    [[nodiscard]] size_t size() const { return mValues.size(); }
-    [[nodiscard]] bool empty() const { return mValues.empty(); }
-
-    [[nodiscard]] bool hasState() const { return mInited;}
-
-    [[nodiscard]] const GFElemState<T>& state() const { return mState; }
-
-protected:
-    bool mInited;
-
-    GFElemState<T> mState;
-    std::vector<T> mValues;
+private:
+    T& mValue;
+    const GFElemState<T>& mState;
 };
 
 template <typename T>
-class Accessor : public AccessorBasic<T> {
-public:
-    using Base = AccessorBasic<T>;
+struct GFElemPtr {
+    GFElemRef<T> operator *() {}
+};
 
-    using Base::AccessorBasic;
-    using TValue = BasicGFElem<T>;
-    using TIter = typename Base::TIter;
-    using Base::mState;
-    using Base::tryInsert;
+template<class ElementType>
+struct accessor_basic {
+    using element_type = ElementType;
+    using reference = ElementType&;
+    using pointer = ElementType*;
 
-    using Value = T;
+    constexpr reference access(pointer p, ptrdiff_t i) const noexcept {
 
-    explicit Accessor(const TValue & elem) {
-        this->mState = elem.getState();
-        this->mInited = true;
-        this->mValues.emplace_back(elem.val());
-    }
-
-    std::pair<bool, TIter> find(const TValue & elem) {
-        if (elem.getState() != mState)
-            return {false, {}};
-
-        return {true, find(elem.val())};
-    }
-
-    const std::pair<bool, TIter> find(const TValue & elem) const{
-        if (elem.getState() != mState)
-            return {false, {}};
-
-        return {true, find(elem.val())};
-    }
-
-    bool tryInsert(const TValue& value) {
-        if (this->mInited && value.getState() != mState)
-            return false;
-
-        this->mValues.emplace_back(value.val());
-
-        if (!this->mInited) {
-            this->mInited = true;
-            mState = value.getState();
-        }
-    }
-
-    bool tryInsert(TValue&& value) {
-        if (this->mInited && value.getState() != mState)
-            return false;
-
-        this->mValues.emplace_back(std::move(value.val()));
-
-        if (!this->mInited) {
-            this->mInited = true;
-            mState = value.getState();
-        }
-
-        return true;
     }
 };
 }
