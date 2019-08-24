@@ -613,73 +613,119 @@ public:
  */
 
 template <typename T>
-struct GFElemPtr;
+class GFElemRef;
 
 template <typename T>
-class GFElemRef {
-public:
-    using Base = BasicGFElem<T>;
+class GFElemPtr {
+    GFElemRef<T> operator *();
+    GFElemRef<T>* operator->();
+};
 
-    GFElemPtr<T> operator &() { }
+template <typename T>
+struct GFElemRef<BasicGFElem<T>> {
+    using TBase = BasicGFElem<T>;
 
-    inline T& val() { return mValue; }
+    GFElemRef() = default;
+    GFElemRef(T& ref, const GFElemState<T> st): mState(st), mValue(ref) {}
 
-    [[nodiscard]] inline size_t gfDegree() const { return mState.SZ; }
-    [[nodiscard]] inline size_t gfOrder() const { return mState.order; }
+    T& val();
 
-    inline T getMod() const { return mState.modPol; }
+    size_t gfDegree() const;
+    size_t gfOrder() const;
 
-    inline T reduce() { return Base(mValue, mState).reduce(); }
+    T getMod() const;
 
-    inline Base getInverse() const { return Base(mValue, mState).getInverse(); }
+    T reduce();
 
-    [[nodiscard]] inline size_t degree(size_t startPos = 1) const { return Base(mValue, mState).degree(startPos); }
+    TBase getInverse() const;
 
-    /**
-     * Operators
-     */
+    GFElemRef& invert();
 
-    friend GFElemRef operator+(const GFElemRef& a, const GFElemRef& b) {
-        return Base(a.mValue, a.mState) + Base(b.mValue, b.mState);
-    }
+    size_t degree(size_t startPos = 1) const;
 
-    friend GFElemRef operator*(const GFElemRef& a, const GFElemRef& b) {
-        return Base(a.mValue, a.mState) * Base(b.mValue, b.mState);
-    }
+    GFElemRef operator=(const GFElemRef& other);
 
-    friend GFElemRef operator/(const GFElemRef& a, const GFElemRef& b) {
-        return Base(a.mValue, a.mState) / Base(b.mValue, b.mState);
-    }
+    friend GFElemRef operator+(const GFElemRef& a, const GFElemRef& b);
+    friend GFElemRef operator*(const GFElemRef& a, const GFElemRef& b);
+    friend GFElemRef operator/(const GFElemRef& a, const GFElemRef& b);
 
-    template <class T1>
-    friend bool operator==(const GFElemRef<T1>& a, const GFElemRef<T1>& b) {
-        return BasicGFElem<T1>(a.mValue, a.mState) == BasicGFElem<T1>(b.mValue, b.mState);
-    }
+    friend GFElemRef operator+=(const GFElemRef& a, const GFElemRef& b);
+    friend GFElemRef operator*=(const GFElemRef& a, const GFElemRef& b);
+    friend GFElemRef operator/=(const GFElemRef& a, const GFElemRef& b);
 
     template <class T1>
-    friend bool operator<(const GFElemRef<T1>& a, const GFElemRef<T1>& b) {
-        return BasicGFElem<T1>(a.mValue, a.mState) < BasicGFElem<T1>(b.mValue, b.mState);
-    }
+    friend bool operator==(const GFElemRef<T1>& lhs, const GFElemRef<T1>& rhs);
 
+    template <class T1>
+    friend bool operator!=(const GFElemRef<T1>& lhs, const GFElemRef<T1>& rhs);
 
-private:
+    template <class T1>
+    friend bool operator<(const GFElemRef<T1>& lhs, const GFElemRef<T1>& rhs);
+
+    template <class T1>
+    friend bool operator>(const GFElemRef<T1>& lhs, const GFElemRef<T1>& rhs);
+
+    template <class T1>
+    friend bool operator<=(const GFElemRef<T1>& lhs, const GFElemRef<T1>& rhs);
+
+    template <class T1>
+    friend bool operator>=(const GFElemRef<T1>& lhs, const GFElemRef<T1>& rhs);
+
+protected:
     T& mValue;
     const GFElemState<T>& mState;
 };
 
 template <typename T>
-struct GFElemPtr {
-    GFElemRef<T> operator *() {}
+class GFElemPtr<BasicGFElem<T>> {
+    GFElemRef<T> operator *() { return GFElemRef<T>(mValue, mState); }
+    GFElemRef<T>* operator->() { return &GFElemRef<T>(mValue, mState); };
+
+protected:
+    T& mValue;
+    const GFElemState<T>& mState;
 };
 
-template<class ElementType>
-struct accessor_basic {
-    using element_type = ElementType;
-    using reference = ElementType&;
-    using pointer = ElementType*;
 
-    constexpr reference access(pointer p, ptrdiff_t i) const noexcept {
+template<class T>
+class Accessor {
+public:
+    using TPtr = GFElemPtr<T>;
+    using TRef = GFElemRef<T>;
+    using TState = GFElemState<T>;
+    using TVal = T;
 
+    constexpr TRef access(TPtr p, ptrdiff_t i) const noexcept {
+        if (p.mState != mState)
+            throw std::runtime_error("Modulus polynomials do not match");
+
+        return TRef(p.mState, mValues[i]);
     }
+
+protected:
+    TState mState;
+    std::vector<T> mValues;
+};
+
+template <class T>
+class MDSpanIter {};
+
+template <typename Accessor>
+class MDSpan {
+    using TVal = typename Accessor::TVal;
+    using TRef = GFElemRef<TVal>;
+    using TIter = MDSpanIter<TVal >;
+
+    template<class... IndexType>
+    constexpr TRef operator()(IndexType... indices) const noexcept;
+
+    template<class IndexType, size_t N>
+    constexpr TRef operator()(const std::array<IndexType, N>& indices) const noexcept;
+
+    constexpr TIter begin() noexcept;
+    constexpr TIter end() noexcept;
+
+private:
+    Accessor accessor;
 };
 }
