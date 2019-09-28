@@ -21,8 +21,8 @@ struct GFElemRef<BasicGFElem<T>> {
 
     constexpr GFElemRef() = default;
     constexpr GFElemRef(T& ref, const GFElemState<T> st) : mState(st), mValue(ref) {}
-    explicit constexpr GFElemRef(const TBase& base) : mState(base.getState()), mValue(base.val()) {}
-    constexpr GFElemRef(const GFElemRef& other): mState(other.mState), mValue(other.mValue) {}
+    explicit constexpr GFElemRef(TBase& base) : mState(base.getState()), mValue(base.val()) {}
+    constexpr GFElemRef(GFElemRef& other): mState(other.mState), mValue(other.mValue) {}
 
     operator TBase() {
         return TBase(mValue, mState);
@@ -48,9 +48,16 @@ struct GFElemRef<BasicGFElem<T>> {
         return BasicGFElem<T>(mValue, mState).reduce();
     }
 
-    inline TBase getInverse() const;
+    inline TBase getInverse() const {
+        return BasicGFElem<T>(mValue, mState).getInverse();
+    }
 
-    inline GFElemRef& invert();
+    inline GFElemRef& invert() {
+        auto res = BasicGFElem<T>(mValue, mState).invert();
+        mValue = res.val();
+        mState = res.getState();
+        return *this;
+    }
 
     [[nodiscard]] inline size_t degree(size_t startPos = 1) const {
         return BasicGFElem<T>(mValue, mState).degree(startPos);
@@ -62,15 +69,21 @@ struct GFElemRef<BasicGFElem<T>> {
         return *this;
     }
 
-    inline friend GFElemRef operator+(const GFElemRef& a, const GFElemRef& b) {
+    inline GFElemRef& operator=(TBase const& other) {
+        mState = other.mState;
+        mValue = other.mValue;
+        return *this;
+    }
+
+    inline friend TBase operator+(const GFElemRef& a, const GFElemRef& b) {
         return BasicGFElem<T>(a.mValue, a.mState) + BasicGFElem<T>(b.mValue, b.mState);
     }
 
-    inline friend GFElemRef operator*(const GFElemRef& a, const GFElemRef& b) {
+    inline friend TBase operator*(const GFElemRef& a, const GFElemRef& b) {
         return BasicGFElem<T>(a.mValue, a.mState) * BasicGFElem<T>(b.mValue, b.mState);
     }
 
-    inline friend GFElemRef operator/(const GFElemRef& a, const GFElemRef& b) {
+    inline friend TBase operator/(const GFElemRef& a, const GFElemRef& b) {
         return BasicGFElem<T>(a.mValue, a.mState) / BasicGFElem<T>(b.mValue, b.mState);
     }
 
@@ -111,12 +124,12 @@ struct GFElemRef<BasicGFElem<T>> {
 
     template <class T1>
     inline friend bool operator<=(const GFElemRef<T1>& lhs, const GFElemRef<T1>& rhs) {
-        return (lhs < rhs) || (lhs == rhs);
+        return lhs.mValue <= rhs.mValue;
     }
 
     template <class T1>
     inline friend bool operator>=(const GFElemRef<T1>& lhs, const GFElemRef<T1>& rhs) {
-        return (rhs < lhs) || (lhs == rhs);
+        return rhs <= lhs;
     }
 
 protected:
@@ -144,27 +157,55 @@ public:
     }
 
 protected:
-    GFElemRef<T>& mRef;
+    GFElemRef<T> mRef;
 };
 
-/*template <class T>
-class MDSpanIter {};
+template <typename T, size_t R, size_t C>
+class MatrixEngine;
 
-template <typename Accessor>
-class MDSpan {
-    using TVal  = typename Accessor::TVal;
-    using TRef  = GFElemRef<TVal>;
-    using TIter = MDSpanIter<TVal>;
+template<typename T, size_t R, size_t C>
+class MatrixEngine<BasicGFElem<T>, R, C> {
+public:
+    constexpr MatrixEngine();
 
-    template <class... IndexType>
-    constexpr TRef operator()(IndexType... indices) const noexcept;
+    constexpr MatrixEngine& operator =(MatrixEngine&&) noexcept = default;
+    constexpr MatrixEngine& operator =(MatrixEngine const&) = default;
 
-    template <class IndexType, size_t N>
-    constexpr TRef operator()(const std::array<IndexType, N>& indices) const noexcept;
+    constexpr GFElemRef<T>& operator()(size_t i, size_t j) {
+        return mData[C * i + j];
+    }
 
-    constexpr TIter begin() noexcept;
-    constexpr TIter end() noexcept;
-};*/
+    [[nodiscard]] constexpr size_t columns() const noexcept {
+        return C;
+    }
+
+    [[nodiscard]] constexpr size_t rows() const noexcept {
+        return R;
+    }
+
+    [[nodiscard]] constexpr size_t size() const noexcept {
+        return R * C;
+    }
+
+    constexpr void swap(MatrixEngine& rhs) noexcept {
+        std::swap(mData, rhs.mData);
+    }
+
+private:
+    std::array<BasicGFElem<T>, R * C> mData;
+};
+
+struct AccessorBasic {
+    template <typename T, size_t R>
+    struct Accessor {
+        using pointer      = MatrixEngine<T, R, 1>*;
+        using reference    = GFElemRef<T>;
+
+        constexpr reference operator()(pointer p, ptrdiff_t i) const noexcept {
+            return (*p)(i, 0);
+        }
+    };
+};
 }
 
 #endif // GFLINALG_GFSTORAGE_H
