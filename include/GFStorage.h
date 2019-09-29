@@ -8,13 +8,6 @@
  */
 
 namespace GFlinalg {
-
-template <typename T>
-class GFElemRef;
-
-template <typename T>
-class GFElemPtr;
-
 template <typename T>
 struct GFElemRef<BasicGFElem<T>> {
     using TBase = BasicGFElem<T>;
@@ -69,9 +62,9 @@ struct GFElemRef<BasicGFElem<T>> {
         return *this;
     }
 
-    inline GFElemRef& operator=(TBase const& other) {
-        mState = other.mState;
-        mValue = other.mValue;
+    inline GFElemRef& operator=(const TBase& other) {
+        mState = other.getState();
+        mValue = other.val();
         return *this;
     }
 
@@ -97,7 +90,22 @@ struct GFElemRef<BasicGFElem<T>> {
         return *this;
     }
 
-    inline  GFElemRef& operator/=(const GFElemRef& a) {
+    inline GFElemRef& operator/=(const GFElemRef& a) {
+        *this = *this / a;
+        return *this;
+    }
+
+    inline GFElemRef& operator+=(const TBase& a) {
+        *this = *this + a;
+        return *this;
+    }
+
+    inline GFElemRef& operator*=(const TBase& a) {
+        *this = *this * a;
+        return *this;
+    }
+
+    inline GFElemRef& operator/=(const TBase& a) {
         *this = *this / a;
         return *this;
     }
@@ -105,6 +113,16 @@ struct GFElemRef<BasicGFElem<T>> {
     template <class T1>
     inline friend bool operator==(const GFElemRef<T1>& lhs, const GFElemRef<T1>& rhs) {
         return lhs.mValue == rhs.mValue && lhs.mState == rhs.mState;
+    }
+
+    template <class T1>
+    inline friend bool operator==(const GFElemRef<T1>& lhs, const TBase & rhs) {
+        return lhs.mValue == rhs.val() && lhs.mState == rhs.getState();
+    }
+
+    template <class T1>
+    inline friend bool operator!=(const GFElemRef<T1>& lhs, const TBase & rhs) {
+        return !(lhs == rhs);
     }
 
     template <class T1>
@@ -140,39 +158,42 @@ protected:
 template <typename T>
 class GFElemPtr<BasicGFElem<T>> {
 public:
+    using Elem = BasicGFElem<T>;
+
     constexpr GFElemPtr() = default;
     constexpr GFElemPtr(const GFElemPtr& other): mRef(other.mRef) {}
+    constexpr GFElemPtr(GFElemRef<Elem>& other): mRef(other) {}
 
     inline GFElemPtr& operator=(const GFElemPtr& other) {
         mRef = other.mRef;
         return *this;
     }
 
-    GFElemRef<T> operator*() {
+    GFElemRef<Elem> operator*() {
         return mRef;
     }
 
-    GFElemRef<T>* operator->() {
+    GFElemRef<Elem>* operator->() {
         return &mRef;
     }
 
 protected:
-    GFElemRef<T> mRef;
+    GFElemRef<Elem> mRef;
 };
-
-template <typename T, size_t R, size_t C>
-class MatrixEngine;
 
 template<typename T, size_t R, size_t C>
 class MatrixEngine<BasicGFElem<T>, R, C> {
 public:
-    constexpr MatrixEngine();
+    constexpr MatrixEngine() = default;
+
+    constexpr explicit MatrixEngine(GFElemState<T>& state): mState(state) {}
 
     constexpr MatrixEngine& operator =(MatrixEngine&&) noexcept = default;
     constexpr MatrixEngine& operator =(MatrixEngine const&) = default;
 
-    constexpr GFElemRef<T>& operator()(size_t i, size_t j) {
-        return mData[C * i + j];
+    constexpr GFElemRef<BasicGFElem<T>> operator()(size_t i, size_t j) {
+        T& ref = mData.at(C * i + j);
+        return GFElemRef<BasicGFElem<T>>(ref, mState);
     }
 
     [[nodiscard]] constexpr size_t columns() const noexcept {
@@ -189,10 +210,12 @@ public:
 
     constexpr void swap(MatrixEngine& rhs) noexcept {
         std::swap(mData, rhs.mData);
+        std::swap(mState, rhs.mState);
     }
 
 private:
-    std::array<BasicGFElem<T>, R * C> mData;
+    GFElemState<T> mState;
+    std::array<T, R * C> mData;
 };
 
 struct AccessorBasic {

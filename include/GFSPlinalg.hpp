@@ -25,6 +25,13 @@ struct GFElemState {
     bool operator != (const GFElemState<MPT>& other) {
         return !(*this == other);
     }
+
+    GFElemState& operator=(const GFElemState& other) {
+        SZ = other.SZ;
+        order = other.order;
+        modPol = other.modPol;
+        return *this;
+    }
 };
 
 template <typename T>

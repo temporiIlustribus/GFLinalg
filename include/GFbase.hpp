@@ -24,6 +24,36 @@ class PowGFElem;
 template <class T>
 class TableGFElem;
 
+/**
+ * Smart reference class for \c BasicGFElem, sort of a fancy pointer.
+ * Gives the ability to view and/or modify a \c BasicGFElem instance stored in a
+ * container without having direct access to that element.
+ *
+ * Methods forming the contract duplicate such from \c BasicGFElem<T>.
+ *
+ * @see GFSPLinang.cpp
+ */
+template <typename T>
+class GFElemRef;
+
+/**
+ * Smart pointer class for \c BasicGFElem, sort of a fancy pointer.
+ *
+ * Gives the ability to view and/or modify a \c BasicGFElem instance stored in a
+ * container without having direct access to that element.
+ *
+ * Methods forming the contract duplicate such from \c BasicGFElem<T>.
+ *
+ */
+template <typename T>
+class GFElemPtr;
+
+/**
+ * Class providing storage for \c BasicGFElem<T> elements (matrix with \c R rows and \c C columns).
+ */
+template <typename T, size_t R, size_t C>
+class MatrixEngine;
+
 namespace op {
 
 /**

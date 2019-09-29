@@ -6,7 +6,6 @@
 #include "catch.hpp"
 #include "GFTPlinalg.hpp"
 #include "GFSPlinalg.hpp"
-#include "GFStorage.h"
 
 
 typedef GFlinalg::BasicBinPolynomial<uint8_t, 11> basicPol;

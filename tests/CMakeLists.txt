@@ -6,7 +6,7 @@ if(RUN_BENCHMARK)
 endif()
 
 if(RUN_TESTS)
-    add_executable(test1 GFtest1.cpp)
+    add_executable(test1 GFtest1.cpp GFStorageTest.cpp)
     target_link_libraries(test1 GFLinalg)
     add_test(test1 test1)
 endif()
