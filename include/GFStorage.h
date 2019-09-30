@@ -188,8 +188,11 @@ public:
 
     constexpr explicit MatrixEngine(GFElemState<T>& state): mState(state) {}
 
-    constexpr MatrixEngine& operator =(MatrixEngine&&) noexcept = default;
-    constexpr MatrixEngine& operator =(MatrixEngine const&) = default;
+    constexpr MatrixEngine& operator =(const MatrixEngine& other)  {
+        mState = other.mState;
+        mData = other.mData;
+        return *this;
+    };
 
     constexpr GFElemRef<BasicGFElem<T>> operator()(size_t i, size_t j) {
         T& ref = mData.at(C * i + j);
