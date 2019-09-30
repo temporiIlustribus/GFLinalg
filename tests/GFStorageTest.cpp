@@ -29,8 +29,8 @@ TEST_CASE("Smart reference", "[GFElemRef]") {
         REQUIRE(a.val() == 1);
         REQUIRE(b.val() == 1);
         REQUIRE((a + b).val() == 0);
-        REQUIRE(a == Elem(7, 11));
-        REQUIRE(a + Elem(17, 11) == Elem(0, 11));
+
+        REQUIRE(a + Elem(7, 11) == Elem(6, 11));
     }
     SECTION("Multiplication") {
         Elem eA(10, 11);

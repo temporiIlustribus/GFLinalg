@@ -13,7 +13,7 @@
  */
 namespace GFlinalg {
 
-template <typename MPT, typename = std::enable_if_t<std::is_default_constructible_v<MPT>>>
+template <typename MPT>
 struct GFElemState {
     size_t SZ, order;
     MPT modPol;
@@ -21,6 +21,9 @@ struct GFElemState {
     GFElemState() : SZ(), order(), modPol() {};
     GFElemState(size_t size, size_t order, const MPT& modPol) : SZ(size), order(order), modPol(modPol) {}
     GFElemState(size_t size, size_t order) : SZ(size), order(order) {}
+
+    GFElemState(const GFElemState& other):
+        SZ(other.SZ), order(other.order), modPol(other.modPol) {}
 
     bool operator != (const GFElemState<MPT>& other) {
         return !(*this == other);

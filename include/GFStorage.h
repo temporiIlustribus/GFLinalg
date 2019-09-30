@@ -13,7 +13,7 @@ struct GFElemRef<BasicGFElem<T>> {
     using TBase = BasicGFElem<T>;
 
     constexpr GFElemRef() = default;
-    constexpr GFElemRef(T& ref, const GFElemState<T> st) : mState(st), mValue(ref) {}
+    constexpr GFElemRef(T& ref, GFElemState<T>& st) : mState(st), mValue(ref) {}
     explicit constexpr GFElemRef(TBase& base) : mState(base.getState()), mValue(base.val()) {}
     constexpr GFElemRef(GFElemRef& other): mState(other.mState), mValue(other.mValue) {}
 
@@ -152,7 +152,7 @@ struct GFElemRef<BasicGFElem<T>> {
 
 protected:
     T& mValue;
-    const GFElemState<T>& mState;
+    GFElemState<T>& mState;
 };
 
 template <typename T>
